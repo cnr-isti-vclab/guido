@@ -1,0 +1,31 @@
+{
+  "name": "guido",
+  "version": "1.0.0",
+  "description": "Interactive guided tour using 360 panoramas in Pisa.",
+  "main": "build/guido.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --mode development",
+    "start": "webpack-dev-server --hot",
+    "rollup": "rollup -c rollup.config.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "html-webpack-plugin": "^4.5.0",
+    "rollup": "^2.52.3",
+    "rollup-plugin-terser": "^7.0.2",
+    "socket.io": "^4.3.1",
+    "socket.io-client": "^4.3.2",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "files": [
+    "build/guide2pi.js",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "src"
+  ]
+}
