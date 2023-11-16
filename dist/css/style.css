@@ -3,12 +3,21 @@
 html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial;}
 #container { position: relative; width:100%; height:100%; }
 
+#tour-initial {
+	position:absolute;
+	width:100%;
+	height:100%;
+	background: white;
+	z-index:1;
+}
 .tour-panel {
 	position:absolute; top:0px; left:0px; bottom:0px;
 	width:300px; 
 	background: rgba(40, 40, 40, 0.7);
 	color:white;
 	z-index:2;
+	display:flex;
+	flex-direction:column;
 }
 .tour-panel.collapse {
 	height:72px;
@@ -16,11 +25,10 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 }
 
 .tour-toolbar {
-	position:absolute; top:0px; left:0px; 
 	width:100%; 
 	display:flex;
-	gap:12px;
-	padding:12px 24px;
+	justify-content:space-around;
+	padding:12px 0px;
 }
 .tour-toolbar svg {
 	fill:none;
@@ -28,29 +36,110 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 	stroke-linecap:round;
 	stroke-linejoin:round;
 	stroke:white;
-	height:48px;
+	height:36px;
+	width:36px;
+	cursor: pointer; 
+	opacity:0.5;
 }
-.tour-guide.active .negate { opacity: 0.0 }
-.tour-guide, .tour-list { opacity:0.5; cursor:pointer; }
-.tour-guide:hover, .tour-list:hover { opacity:0.8; }
-.tour-guide.active, .tour-list.active { opacity: 1.0; }
+.tour-toolbar .tour-users svg {
+	width:42px:
+}
+
+.tour-toolbar :hover { opacity: 0.8; }
+.tour-toolbar .active svg { opacity: 1.0; }
+.tour-toolbar .tour-raise.raised svg { stroke:red; opacity: 1.0; }
+.tour-toolbar .tour-laser.laser svg { stroke:red; opacity: 1.0; }
+.tour-toolbar .disabled { display:none; }
+
+[badge]:after {
+	background: red;
+	border-radius: 30px;
+		color: #fff;	
+	content: attr(badge);
+	font-size: 11px;
+	margin-top: -0px;
+	margin-left: -10px;
+	min-width: 15px;
+	height:15px;
+	padding: 1px 1px 1px 1px;
+	position: absolute;
+	text-align: center;
+}
+
+[badge^="-"]:after,
+[badge="0"]:after,
+[badge=""]:after {
+ display: none;
+}
+
+/*.tour-guide:not(.follow) { opacity: 1.0 } */
+.tour-guide.follow .negate { opacity: 0.0 }
+
+.tour-guide, .tour-entries, .tour-chat, .tour-users, .tour-raise {  cursor:pointer; }
+
+
+
+
+
+/*.tour-guide:hover, .tour-entries:hover { opacity:0.8; }
+.tour-guide.active, .tour-entries.active { opacity: 1.0;  */}
 .tour-upload, .tour-save, .tour-screenshot { cursor:pointer; }
 
-.tour-entries { 
-	position:absolute; top:40px; left:0px; bottom:0px;
+#tour-entries, #tour-users, #tour-chat ul { 
 	width:100%; 
 	list-style-position: none;
 	padding: 32px 0px;
 	opacity: 0.8;
 	overflow: auto;
 }
-.collapse .tour-entries {
-	display:none;
+
+.tour-section {
+	flex: 1 1 1px;
+	overflow:auto;
 }
 
-.tour-entries li { cursor: pointer; padding:5px 0px; padding-left:16px; }
-.tour-entries li:hover { background-color:#888; color:#fff; }
-.tour-entries li.current { font-weight:bold; }
+.tour-section.hidden {
+	display: none !important;
+}
+
+/*.collapse .tour-section {
+	display:none;
+} */
+
+.tour-section li { cursor: pointer; padding:5px 0px; padding-left:16px; }
+.tour-section li:hover, .tour-userlist li:hover { background-color:#888; color:#fff; }
+.tour-section li.current { font-weight:bold; }
+
+#tour-users img {
+	width:24px;
+	height:24px;
+	float:right;
+	padding-right:2px;
+}
+
+#tour-chat {
+	display:flex;
+	flex-direction:column;
+}
+#tour-chat div {
+	display:flex;
+}
+
+#tour-chat input {
+	flex-grow:1
+}
+#tour-chat button {
+	margin:2px;
+}
+
+#tour-chat ul {
+	flex-grow: 1;
+	overflow:auto;
+
+	display:flex;
+	flex-direction: column-reverse;
+	max-height:100%;
+}
 
 .pnlm-hotspot {
 	height: 32px;
@@ -66,7 +155,10 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 .tour-spot {
 	fill:rgb(255, 255, 255, 0.5);
 }
-
+.tour-highlight {
+	width:50px;
+	height:50px;
+}
 
 .tour-visibility {
 	fill: rgba(255, 255, 255, 0.1);

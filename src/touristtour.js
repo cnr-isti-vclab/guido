@@ -1,0 +1,159 @@
+import { Tour } from './tour.js'
+import { StreamClient } from './stream_client.js'
+
+class TouristTour extends Tour {
+	constructor(container, panourl, serverurl, socketpath) {
+		super(container, panourl, serverurl, socketpath);
+
+		this.guideView = null;  
+		this.following = true;  //only when following
+		this.looking = false; //looking around while following?
+		this.lookingIdle = 3000; //if looking and idle for this ms, return to follow.
+		this.followTimeout = false; //timeout when changing view to refollow.
+		this.locked = true;
+		this.muted = true;
+		
+		this.streamClient.addEvent('follow', status => 	{ this.status = status; this.follow(); });
+
+		this.streamClient.addEvent('connected', () => {
+			//console.log("SHARING AUDIO");
+			//this.streamClient.shareMedia(StreamClient.AUDIO);
+		});
+
+		this.userTalk = document.querySelector('#user_talk');
+		this.userMute = document.querySelector('#user_mute');
+
+		document.addEventListener('click', (event) => {
+			if(this.locked)
+				return;
+
+			if (event.target.closest('#user_talk')) {
+				this.mute(false);
+			} else if(event.target.closest('#user_mute')) {
+				this.unmute();
+			}
+		});
+		this.streamClient.addEvent('mute', (id) => { 
+			if(id == this.streamClient.id)
+				this.mute(true);
+		 });
+		 this.streamClient.addEvent('unmute', (id) => { 
+			if(id == this.streamClient.id)
+				this.unmute();
+		 });
+
+	}
+
+	mute(disable) {
+		this.talkEnabled(false);
+		this.streamClient.unshareMedia(StreamClient.AUDIO);
+		this.userTalk.style.display = 'none';
+		this.userMute.style.display = 'block';
+		this.muted = true;
+	}
+
+	unmute() {
+		this.talkEnabled(true);
+		this.streamClient.shareMedia(StreamClient.AUDIO);
+		this.userTalk.style.display = 'block';
+		this.userMute.style.display = 'none';
+		this.muted = false;
+	}
+
+	talkEnabled(enable) {
+		this.userTalk.classList.toggle(enable);
+		this.userMute.classList.toggle(enable);
+	}
+
+	updateUsers(users) {
+		super.updateUsers(users);
+		for(let user of Object.values(users)) {
+			if(user.id != this.streamClient.id)
+				continue;
+			if(user.muted && this.muted == false)
+				this.mute();
+
+			this.locked = user.locked;
+			this.userMute.classList.toggle('disabled', user.locked);
+		}
+	}
+
+	async subscribe(e) {
+		console.log("request to subscribe: ", e);
+		if(!this.connected)
+			return;
+
+		this.stream = await this.streamClient.subscribe(e);
+		console.log("Stream!", this.stream.getTracks(), e);
+		let video = document.querySelector('#users_video video');
+		video.srcObject = this.stream;
+		
+		await this.streamClient.resume();
+	}
+
+	wheelEvent(e) {
+		this.lookaround();
+	}
+	zoomChange(e) {
+	}
+
+	viewChange(e) {
+		this.lookaround();
+	}
+
+	panoClicked(e) {
+		console.log('panoclicked');
+		this.following = false;
+		this.looking = false;
+		clearTimeout(this.followTimeout);
+		document.querySelector('.tour-guide').classList.toggle('follow', false);
+	}
+
+	lookaround() {
+		if(!this.following)
+			return;
+
+		this.looking = true;
+		document.querySelector('.tour-guide').classList.toggle('follow', false);
+		clearTimeout(this.followTimeout);
+		this.followTimeout = setTimeout(() => { this.looking = false; this.follow(); }, this.lookingIdle);
+
+	}
+
+	follow() {
+		if(!this.status)
+			return;
+
+		this.tools.laser.classList.toggle('laser', this.status.highlight !== null);
+
+		if(this.following === true && this.looking !== true) {
+			document.querySelector('.tour-guide').classList.toggle('follow', true);
+			this.panorama.setStatus(this.status, 0);
+		}
+	}
+
+
+
+	initToolbar() {
+		super.initToolbar();
+		this.tools.guide.addEventListener('click', (e) => {
+			this.following = !this.following;
+			this.looking = false;
+			document.querySelector('.tour-guide').classList.toggle('follow', this.following);
+
+			if(this.following)
+				this.follow();		
+		});
+		this.tools.raise.addEventListener('click', (e) => { this.raise() });
+
+	}
+
+	raise() {
+		this.raised = !this.raised;
+		this.tools.raise.classList.toggle('raised', this.raised);
+		this.streamClient.sendMsg('raise', this.raised);
+	}
+
+}
+
+export { TouristTour }
