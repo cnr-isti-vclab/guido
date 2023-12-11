@@ -69,7 +69,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line880">line 880</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line924">line 924</a>
     </li></ul></dd>
     
 
@@ -232,7 +232,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line905">line 905</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line949">line 949</a>
     </li></ul></dd>
     
 
@@ -369,7 +369,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line890">line 890</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line934">line 934</a>
     </li></ul></dd>
     
 
@@ -457,7 +457,144 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line991">line 991</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line1053">line 1053</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~resetTooltipsVisibility"><span class="type-signature">(inner) </span>resetTooltipsVisibility<span class="signature">(minimap)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Riporta la visibilità dei tooltip dei marker allo stato iniziale in base alla scala della mappa.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>minimap</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="MiniMap.html">MiniMap</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">L'oggetto MiniMap a cui è associata la mappa.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line996">line 996</a>
     </li></ul></dd>
     
 
@@ -617,7 +754,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line916">line 916</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line960">line 960</a>
     </li></ul></dd>
     
 
@@ -653,7 +790,7 @@
     
 
     
-    <h4 class="name" id="~toggleTooltipsByPriority"><span class="type-signature">(inner) </span>toggleTooltipsByPriority<span class="signature">(minimap, priorityLevel)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~toggleTooltipsVisibility"><span class="type-signature">(inner) </span>toggleTooltipsVisibility<span class="signature">(minimap, startIndex)</span><span class="type-signature"></span></h4>
     
 
     
@@ -661,7 +798,7 @@
 
 
 <div class="description">
-    Mostra/nasconde i tooltip dei marker in base alla priorità.Se priorityLevel è -1, mostra/nasconde i tooltip con priorità maggiore o uguale a quella impostata in minimap.tooltipsShowingPriorityLevel; altrimeti mostra/nasconde i tooltip con priorità pari a priorityLevel.
+    Mostra/nasconde i tooltip dei marker in base alla scala della mappa.
 </div>
 
 
@@ -686,6 +823,8 @@
 
         
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -712,6 +851,10 @@
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">L'oggetto MiniMap a cui è associata la mappa.</td>
         </tr>
@@ -720,7 +863,7 @@
 
         <tr>
             
-                <td class="name"><code>priorityLevel</code></td>
+                <td class="name"><code>startIndex</code></td>
             
 
             <td class="type">
@@ -735,8 +878,14 @@
             
 
             
+                <td class="default">
+                
+                    0
+                
+                </td>
+            
 
-            <td class="description last">Il livello di priorità dei tooltip da mostrare.</td>
+            <td class="description last">L'indice di partenza della showList dei tooltip da cui partire a mostrare/nascondere.</td>
         </tr>
 
     
@@ -777,7 +926,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line931">line 931</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line974">line 974</a>
     </li></ul></dd>
     
 
@@ -937,7 +1086,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line984">line 984</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line1046">line 1046</a>
     </li></ul></dd>
     
 
@@ -1074,7 +1223,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line951">line 951</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line1015">line 1015</a>
     </li></ul></dd>
     
 
@@ -1126,7 +1275,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Sat Dec 09 2023 17:57:55 GMT+0100 (Ora standard dell’Europa centrale)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Mon Dec 11 2023 11:17:35 GMT+0100 (Ora standard dell’Europa centrale)
 </footer>
 
 <script> prettyPrint(); </script>

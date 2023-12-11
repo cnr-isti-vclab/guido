@@ -9,7 +9,7 @@ import MiniMap from './js/MiniMap.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   let minimap = new MiniMap();
-  minimap.init('./dataset.json', 338);
+  minimap.init('./dataset.json');
 
   // EXTRA DA ELIMINARE
   let yawDX = document.getElementById("yaw_DX");
@@ -20,6 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let yawSX = document.getElementById("yaw_SX");
   yawSX.addEventListener("click", () => {
     minimap.updateCurrentPanoYaw(-5);
+  });
+
+  let skipPano = document.getElementById("skip_pano");
+  skipPano.addEventListener("click", () => {
+    let panoIndex = Math.floor(Math.random() * 1000) % minimap.currentSet.panos.length;
+    let panoID = minimap.currentSet.panos[panoIndex].id;
+    minimap.togglePanoSkip(panoID);
   });
 
   let changePano = document.getElementById("change_pano");

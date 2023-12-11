@@ -273,7 +273,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line40">line 40</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line39">line 39</a>
     </li></ul></dd>
     
 
@@ -554,7 +554,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line28">line 28</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line27">line 27</a>
     </li></ul></dd>
     
 
@@ -720,7 +720,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line21">line 21</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line20">line 20</a>
     </li></ul></dd>
     
 
@@ -932,7 +932,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line53">line 53</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line52">line 52</a>
     </li></ul></dd>
     
 
@@ -1135,7 +1135,76 @@
 
         <tr>
             
-                <td class="name"><code>showScaleThreshold</code></td>
+                <td class="name"><code>showScaleStep</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Passo di scala per la visualizzazione dei tooltip</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>showListNextThreshold</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Soglia di scala per il prossimo showList</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>currentShowListIndex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Indice della showList corrente</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>showLists</code></td>
             
 
             <td class="type">
@@ -1151,7 +1220,7 @@
 
             
 
-            <td class="description last">Array contenente i valori di scala dello SVG a cui mostrare i tooltip</td>
+            <td class="description last">Array contenente le showList</td>
         </tr>
 
     
@@ -1236,7 +1305,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line62">line 62</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line61">line 61</a>
     </li></ul></dd>
     
 
@@ -1356,7 +1425,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line48">line 48</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line47">line 47</a>
     </li></ul></dd>
     
 
@@ -1476,7 +1545,150 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line16">line 16</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line15">line 15</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="ShowList">ShowList</h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>scaleThreshold</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Soglia di scala per la showList</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>showList</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Array contenente gli indici dei pano da mostrare</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line77">line 77</a>
     </li></ul></dd>
     
 
@@ -1642,7 +1854,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line9">line 9</a>
+        <a href="MiniMap.js.html">MiniMap.js</a>, <a href="MiniMap.js.html#line8">line 8</a>
     </li></ul></dd>
     
 
@@ -1678,7 +1890,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Sat Dec 09 2023 17:57:55 GMT+0100 (Ora standard dell’Europa centrale)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Mon Dec 11 2023 11:17:35 GMT+0100 (Ora standard dell’Europa centrale)
 </footer>
 
 <script> prettyPrint(); </script>

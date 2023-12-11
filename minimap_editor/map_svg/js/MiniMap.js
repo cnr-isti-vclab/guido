@@ -2,7 +2,6 @@
  * @file Questo file contiene la classe MiniMap.
  * 
  * @requires utils
- * @requires svgMatrix
  * @requires controlsBarData
  */
 
@@ -67,9 +66,18 @@
  * @property {Number} padding - Padding del tooltip
  * @property {Number} pinDistance - Distanza del pin del tooltip dal marker
  * @property {Boolean} showAll - Flag che indica se mostrare tutti i tooltip
- * @property {Array} showScaleThreshold - Array contenente i valori di scala dello SVG a cui mostrare i tooltip
+ * @property {Number} showScaleStep - Passo di scala per la visualizzazione dei tooltip
+ * @property {Number} showListNextThreshold - Soglia di scala per il prossimo showList
+ * @property {Number} currentShowListIndex - Indice della showList corrente
+ * @property {Array} showLists - Array contenente le showList
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i tooltip
  * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei tooltip
+ */
+
+/**
+ * @typedef {Object} ShowList
+ * @property {Number} scaleThreshold - Soglia di scala per la showList
+ * @property {Array} showList - Array contenente gli indici dei pano da mostrare
  */
 
 /**
@@ -93,11 +101,11 @@
  * @property {Number} #saveTimeout - Timeout di salvataggio
  * @property {Boolean} #changesUnsaved - Flag che indica se ci sono modifiche non salvate
  * @property {Boolean} #saveTimeoutRunning - Flag che indica se è in corso il timeout di salvataggio
+ * @property {Array} #orderedPanos - Array contenente gli indici dei pano ordinati per priorità
  * @property {MiniMapDOMMapElements} #DOMMapElements - Oggetto contenente le informazioni relative agli elementi SVG della mappa
  */
 
 import * as utils from './utils.js';
-import * as svgMatrix from './svgMatrix.js';
 import controlsBarData from './controlsBarData.js';
 
 export default class MiniMap {
@@ -124,6 +132,8 @@ export default class MiniMap {
     #saveTimeoutRunning = false;
 
     // DOM infos
+    #orderedPanos = [];
+
     #DOMMapElements = {
         svg: {
             margin: 0,
@@ -160,7 +170,10 @@ export default class MiniMap {
                 padding: 5,
                 pinDistance: 10,
                 showAll: false,
-                showScaleThreshold: [0.25, 0.5, 1],
+                showScaleStep: 0.005,
+                showListNextThreshold: 1,
+                currentShowListIndex: 0,
+                showLists: [],
                 DOMElement: null,
                 DOMElements: []
             },
@@ -295,14 +308,12 @@ export default class MiniMap {
         return this.#DOMMapElements.panosElements.tooltips;
     }
 
-    get tooltipsShowingPriorityLevel () {
-        if (this.svgScaleValues.x <= this.tooltips.showScaleThreshold[0]) {
-            return 0;
-        } else if (this.svgScaleValues.x <= this.tooltips.showScaleThreshold[1]) {
-            return 1;
-        } else {
-            return 2;
-        }
+    get orderedPanos () {
+        return this.#orderedPanos;
+    }
+
+    get tooltipsShowLists () {
+        return this.tooltips.showLists;
     }
 
     getMarkerDOMElement (panoIndex) {
@@ -416,10 +427,11 @@ export default class MiniMap {
      * 
      * @param {Number} panoID - ID del pano
      * @param {Number} scopeLevel - Livello di scope (0: panos, 1: sets, 2: tours)
+     * @param {Boolean} noskip - Flag che indica se includere i pano skip
      * 
      * @returns {Array} - Array contenente gli indici di tour, set e pano oppure null se non è presente nel dataset il pano con ID specificato
      */
-    findIndices (panoID, scopeLevel=2) {
+    findIndices (panoID, scopeLevel=2, noskip=true) {
         
         let tour = this.#currentTourIndex;
         let set = this.#currentSetIndex;
@@ -482,7 +494,7 @@ export default class MiniMap {
         }
 
         // check pano skip
-        if (pano !== -1) {
+        if (pano !== -1 && noskip) {
             pano = this.#dataset.tours[tour].sets[set].panos[pano].skip ? -1 : pano;
         }
 
@@ -609,19 +621,129 @@ export default class MiniMap {
         this.svg.DOMElement.appendChild(tooltipsSVGGroup);
         this.tooltips.DOMElement = tooltipsSVGGroup;
 
+        let panosByPriority = [[], [], []];
+
         // add markers and tooltips to respective groups for each pano
         for (const [i, pano] of this.currentSet.panos.entries()) {
             this.markers.DOMElements.push(utils.addMarker (this, i));
             
             this.tooltips.DOMElements.push(utils.addToolTip (this.tooltips, pano.translation, pano.label));
+            
+            panosByPriority[pano.priority].push(i);
 
             if (pano.skip) {
                 this.markers.DOMElements[i].classList.add("skip");
                 this.tooltips.DOMElements[i].classList.add("skip");
             }
         }
+
+        this.#orderedPanos = panosByPriority[2].concat(panosByPriority[1], panosByPriority[0]);
+
+        this.addShowList(1);
+
+        if (this.tooltips.showAll) {
+            utils.toggleTooltipsVisibility(this);
+        }
     }
 
+    /**
+     * Calcola la distanza tra due pano.
+     * 
+     * @param {Object} panoA - Pano A
+     * @param {Object} panoB - Pano B
+     * 
+     * @returns {Number} - Distanza tra i due pano
+     */
+    panosDistance (panoA, panoB) {
+        return Math.sqrt(
+            Math.pow(panoA.translation[0] - panoB.translation[0], 2) +
+            Math.pow(panoA.translation[1] - panoB.translation[1], 2)
+        );
+    }
+
+    /**
+     * Controlla se due tooltip si intersecano.
+     * 
+     * @param {SVGElement} tooltipA - Tooltip A
+     * @param {SVGElement} tooltipB - Tooltip B
+     * 
+     * @returns {Boolean} - True se i tooltip si intersecano, false altrimenti
+     */
+    checkIntersection (tooltipA, tooltipB) {
+        const tooltipABBox = tooltipA.getBoundingClientRect();
+        const tooltipBBBox = tooltipB.getBoundingClientRect();
+
+        return !(tooltipABBox.x > tooltipBBBox.x + tooltipBBBox.width ||
+            tooltipABBox.x + tooltipABBox.width < tooltipBBBox.x ||
+            tooltipABBox.y > tooltipBBBox.y + tooltipBBBox.height ||
+            tooltipABBox.y + tooltipABBox.height < tooltipBBBox.y);
+    }
+
+    /**
+     * Aggiunge una showList.
+     * 
+     * @param {Number} sThreshold - Soglia di scala per la showList
+     * 
+     * @returns {Number} - Indice della showList aggiunta o -1 se non è stata aggiunta
+     */
+    addShowList (sThreshold) {
+        const i = this.tooltipsShowLists.length;
+
+        this.tooltipsShowLists[i] = {
+            scaleThreshold: sThreshold,
+            showList: []
+        };
+
+        if (i === 0) {
+            this.tooltipsShowLists[i].showList.push(this.#orderedPanos[0]);
+            this.#orderedPanos.splice(0, 1);
+        }
+
+        let j = 0;
+
+        while (j < this.#orderedPanos.length) {
+            const panoIndex = this.#orderedPanos[j];
+            const tooltip = this.tooltips.DOMElements[panoIndex];
+
+            let check = true;
+
+            for (const list of this.tooltipsShowLists) {
+                for (const idx of list.showList) {
+                    const tooltip2 = this.tooltips.DOMElements[idx];
+
+                    if (this.checkIntersection(tooltip, tooltip2)) {
+                        check = false;
+                        break;
+                    }
+                }
+            }
+
+            if (check) {
+                this.tooltipsShowLists[i].showList.push(panoIndex);
+                this.#orderedPanos.splice(j, 1);
+            } else {
+                j++;
+            }
+        }
+
+        if (this.tooltipsShowLists[i].showList.length === 0) {
+            // rimuove showList vuota
+            this.tooltipsShowLists.splice(i, 1);
+
+            return -1;
+        } else {
+            // aggiorna il valore di soglia per il prossimo showList
+            this.tooltips.showListNextThreshold = this.tooltipsShowLists[i].scaleThreshold-this.tooltips.showScaleStep;
+
+            return i;
+        }
+    }
+
+    /**
+     * Init map controls.
+     * 
+     * @param {Object} controlsBar - Oggetto contenente le informazioni relative ai controlli della mappa
+     */
     initMapControls (controlsBar) {
 
         let mapControls = document.getElementById("map_controls");
@@ -856,8 +978,23 @@ export default class MiniMap {
     updateCurrentPanoYaw (yaw) {
     }
 
-    // TODO
+    /**
+     * Attiva o disattiva lo skip del pano con ID specificato e prova a salvare le modifiche effettuate al dataset sul server.
+     * 
+     * @param {number} id - ID del pano
+     */
     togglePanoSkip (id) {
+        const [t, s, p] = this.findIndices(id, 2, false);
+        const pano = this.#dataset.tours[t].sets[s].panos[p];
+
+        pano.skip = !pano.skip;
+
+        if (t === this.#currentTourIndex && s === this.#currentSetIndex) {
+            this.markers.DOMElements[p].classList.toggle("skip");
+            this.tooltips.DOMElements[p].classList.toggle("skip");
+        }
+
+        this.saveDataset();
     }
 
     /**
@@ -873,7 +1010,6 @@ export default class MiniMap {
         if (this.currentPano.id !== panoID) {
             // Salvataggio temporaneo dell'indice e della priorità del pano corrente
             const tempIndex = this.#currentPanoIndex;
-            const tempPriority = this.currentPano.priority;
 
             // Aggiorna l'indice del pano corrente
             this.#currentPanoIndex = panoIndex;
@@ -887,18 +1023,13 @@ export default class MiniMap {
             // Cambia il marker da corrente a non corrente
             utils.changePinType (tempIndex, this);
 
-            // Aggiorna la visibilità del tooltip associato
-            if (this.tooltips.showAll && tempPriority >= this.tooltipsShowingPriorityLevel) {
-                this.getToolTipDOMElement(tempIndex).classList.toggle("invisible");
-            }
-
             // Cambia il marker da non corrente a corrente
             utils.changePinType (this.#currentPanoIndex, this);
 
-            // Se showAll è disabilitato e l'interazione avviene nella minimappa, essendo diventato ora e.target il pin corrente, non ha un listener per il mouseleave, quindi occorre togliere manualmente la classe invisible al tooltip associato;
-            // Se showAll è abilitato, il tooltip era visibile e deve essere nascosto in quanto ora è il corrente
-            if ((!this.tooltips.showAll && clickInMinimap) || (this.tooltips.showAll && this.currentPano.priority >= this.tooltipsShowingPriorityLevel)) {
-                this.getToolTipDOMElement(this.#currentPanoIndex).classList.toggle("invisible");
+            // Se showAll è abilitato, aggiorna la visibilità dei tooltip
+            if (this.tooltips.showAll) {
+                utils.resetTooltipsVisibility(this);
+                utils.toggleTooltipsVisibility(this);
             }
 
             utils.moveVisibilityArea(this.visibilityArea.DOMElement, this.panosElementsTranslation, this.currentPano.translation);
@@ -928,21 +1059,34 @@ export default class MiniMap {
         } else {
             [this.#currentTourIndex, this.#currentSetIndex, this.#currentPanoIndex] = [t, s, p];
 
-            // resetto elemento SVG del DOM eliminando tutti i figli
-            this.svg.DOMElement.replaceChildren();
-
-            // resetto valori di traslazione e scaling
-            this.svg.translation.x = 0;
-            this.svg.translation.y = 0;
-            this.svg.scale.x = 1;
-            this.svg.scale.y = 1;
-
-            // resetto i campi di #DOMMapElements che contenevano riferimenti ai precedenti elementi SVG
-            this.markers.DOMElements = []
-            this.tooltips.DOMElements = []
+            this.resetDOMMapElements();
 
             // aggiorno la mappa
             this.updateMap();
         }
     }
+
+    /**
+     * Resetta i campi di #DOMMapElements che contenevano riferimenti ai precedenti elementi SVG in modo da poter aggiornare la mappa tramite la funzione updateMap().
+     */
+    resetDOMMapElements () {
+        // resetto elemento SVG del DOM eliminando tutti i figli
+        this.svg.DOMElement.replaceChildren();
+
+        // resetto valori di traslazione e scaling
+        this.svg.translation.x = 0;
+        this.svg.translation.y = 0;
+        this.svg.scale.x = 1;
+        this.svg.scale.y = 1;
+
+        // resetto i campi di #DOMMapElements che contenevano riferimenti ai precedenti elementi SVG
+        this.markers.DOMElements = []
+        this.tooltips.DOMElements = []
+
+        // resetto l'array di showLists e le relative variabili
+        this.tooltips.showLists = [];
+        this.tooltips.showListNextThreshold = 1;
+        this.tooltips.currentShowListIndex = 0;
+    }
+
 }
