@@ -117,14 +117,13 @@ let svgStyleString = `
 /// SECTION UTILS ///
 
 /**
- * @module utils
- * @description Moduli per la gestione di funzioni di utilità.
+ * @module utils.misc
  */
 
 /**
  * 
- * @param {String} hex - Il colore esadecimale da convertire.
- * @returns {Array} rgb - Un array contenente i valori RGB del colore convertito.
+ * @param {string} hex - Il colore esadecimale da convertire.
+ * @returns {Array.<number>} rgb - Un array contenente i valori RGB del colore convertito.
  */
 function hexToRgb(hex) {
     // Rimuovi il carattere '#' se presente
@@ -142,10 +141,10 @@ function hexToRgb(hex) {
 
 /**
  * 
- * @param {Number} r - Il valore del canale rosso.
- * @param {Number} g - Il valore del canale verde.
- * @param {Number} b - Il valore del canale blu.
- * @returns {String} hex - Il colore esadecimale convertito.
+ * @param {number} r - Il valore del canale rosso.
+ * @param {number} g - Il valore del canale verde.
+ * @param {number} b - Il valore del canale blu.
+ * @returns {string} hex - Il colore esadecimale convertito.
  */
 function rgbToHex(r, g, b) {
     // Assicurati che i valori siano compresi tra 0 e 255
@@ -162,8 +161,8 @@ function rgbToHex(r, g, b) {
 /**
  * Converte un colore esadecimale in scala di grigi.
  * 
- * @param {String} hexColor - Il colore esadecimale da convertire.
- * @returns {String} grayColor - Il colore esadecimale convertito.
+ * @param {string} hexColor - Il colore esadecimale da convertire.
+ * @returns {string} grayColor - Il colore esadecimale convertito.
  */
 function toGrayScale(hexColor) {
     // Converti il colore esadecimale in RGB
@@ -181,10 +180,10 @@ function toGrayScale(hexColor) {
 /**
  * Genera il nome della classe da assegnare al marker in base alla sua visibilità e priorità.
  * 
- * @param {Boolean} visibility - La visibilità del pano.
- * @param {Number} priority - La priorità del pano.
+ * @param {boolean} visibility - La visibilità del pano.
+ * @param {number} priority - La priorità del pano.
  * 
- * @returns {String} className - Il nome della classe da assegnare al marker.
+ * @returns {string} className - Il nome della classe da assegnare al marker.
  */
 function generateMarkerClassName (visibility, priority) {
     return visibility ? `visible_P${priority}` : `not_visible_P${priority}`;
@@ -194,8 +193,8 @@ function generateMarkerClassName (visibility, priority) {
  * Scambia il valore di due attributi di un elemento.
  *
  * @param {HTMLElement} element - L'elemento di cui scambiare gli attributi.
- * @param {String} attrA - Il nome del primo attributo.
- * @param {String} attrB - Il nome del secondo attributo.
+ * @param {string} attrA - Il nome del primo attributo.
+ * @param {string} attrB - Il nome del secondo attributo.
  */ 
 function attributeSwitch (element, attrA, attrB) {
     const value = element.getAttribute(attrA);
@@ -208,10 +207,10 @@ function attributeSwitch (element, attrA, attrB) {
  * 
  * @async
  * @param {Object} dataset - L'oggetto dataset da salvare.
- * @param {String} url - L'url a cui inviare la richiesta di salvataggio.
- * @param {Boolean} errorShowModal - Indica se mostrare o meno il dialog in caso di errore.
+ * @param {string} url - L'url a cui inviare la richiesta di salvataggio.
+ * @param {boolean} [errorShowModal] - Indica se mostrare o meno il dialog in caso di errore.
  * 
- * @returns {Promise<Boolean>} r - Indica se la richiesta è andata a buon fine.
+ * @returns {Promise<boolean>} r - Indica se la richiesta è andata a buon fine.
  */
 async function sendData (dataset, url, errorShowModal = true) {
     const payload = {
@@ -250,19 +249,19 @@ async function sendData (dataset, url, errorShowModal = true) {
 /// SECTION SVG PATHS ///
 
 /**
- * @module svgPaths
- * @description Moduli per la creazione di path SVG.
+ * @module utils.svgPaths
+ * @description Funzioni per la creazione di path SVG.
  */
 
 /**
  * Crea un path per un anello circolare.
  * 
- * @param {Number} cx - Coordinata X del centro dell'anello.
- * @param {Number} cy - Coordinata Y del centro dell'anello.
- * @param {Number} rInner - Raggio interno dell'anello.
- * @param {Number} rOuter - Raggio esterno dell'anello.
+ * @param {number} cx - Coordinata X del centro dell'anello.
+ * @param {number} cy - Coordinata Y del centro dell'anello.
+ * @param {number} rInner - Raggio interno dell'anello.
+ * @param {number} rOuter - Raggio esterno dell'anello.
  * 
- * @returns {String} path - Il path dell'anello.
+ * @returns {string} path - Il path dell'anello.
  */
 function areaRingPath (cx, cy, rInner, rOuter) {
     return `M ${cx} ${cy-rOuter}
@@ -278,11 +277,11 @@ function areaRingPath (cx, cy, rInner, rOuter) {
 /**
  * Realizza un path a forma di pin.
  * 
- * @param {Number} x - Coordinata X del punto di inizio del path.
- * @param {Number} y - Coordinata Y del punto di inizio del path.
- * @param {Number} r - Il raggio dell'arco del pin.
+ * @param {number} x - Coordinata X del punto di inizio del path.
+ * @param {number} y - Coordinata Y del punto di inizio del path.
+ * @param {number} r - Il raggio dell'arco del pin.
  * 
- * @returns {String} path - Il path del pin.
+ * @returns {string} path - Il path del pin.
  */
 function pinCurrentPath (x, y, r) {
     const c = r / 2;
@@ -298,11 +297,11 @@ function pinCurrentPath (x, y, r) {
 /**
  * Realizza un path a forma di cerchio.
  * 
- * @param {Number} cx - Coordinata X del centro del cerchio.
- * @param {Number} cy - Coordinata Y del centro del cerchio.
- * @param {Number} r - Raggio del cerchio.
+ * @param {number} cx - Coordinata X del centro del cerchio.
+ * @param {number} cy - Coordinata Y del centro del cerchio.
+ * @param {number} r - Raggio del cerchio.
  * 
- * @returns {String} path - Il path del cerchio.
+ * @returns {string} path - Il path del cerchio.
  */
 function pinP0Path (cx, cy, r) {
     return `M ${cx} ${cy-r}
@@ -314,11 +313,11 @@ function pinP0Path (cx, cy, r) {
 /**
  * Realizza un path a forma di triangolo.
  * 
- * @param {Number} cx - Coordinata X del centro del triangolo.
- * @param {Number} cy - Coordinata Y del centro del triangolo.
- * @param {Number} r - Raggio del triangolo.
+ * @param {number} cx - Coordinata X del centro del triangolo.
+ * @param {number} cy - Coordinata Y del centro del triangolo.
+ * @param {number} r - Raggio del triangolo.
  * 
- * @returns {String} path - Il path del triangolo.
+ * @returns {string} path - Il path del triangolo.
  */
 function pinP1Path (cx, cy, r) {
     return `M ${cx} ${cy-r}
@@ -330,11 +329,11 @@ function pinP1Path (cx, cy, r) {
 /**
  * Realizza un path a forma di rombo.
  * 
- * @param {Number} cx - Coordinata X del centro del rombo.
- * @param {Number} cy - Coordinata Y del centro del rombo.
- * @param {Number} r - Raggio del rombo.
+ * @param {number} cx - Coordinata X del centro del rombo.
+ * @param {number} cy - Coordinata Y del centro del rombo.
+ * @param {number} r - Raggio del rombo.
  * 
- * @returns {String} path - Il path del rombo.
+ * @returns {string} path - Il path del rombo.
  */
 function pinP2Path (cx, cy, r) {
     return `M ${cx} ${cy-r}
@@ -347,13 +346,13 @@ function pinP2Path (cx, cy, r) {
 /**
  * Realizza un path a forma di tooltip.
  * 
- * @param {Number} width - La larghezza del tooltip.
- * @param {Number} height - L'altezza del tooltip.
- * @param {Number} angleRadius - Il raggio dell'angolo del tooltip.
- * @param {Number} padding - Il padding del tooltip.
- * @param {Number} pinOffset - L'offset del pin del tooltip.
+ * @param {number} width - La larghezza del tooltip.
+ * @param {number} height - L'altezza del tooltip.
+ * @param {number} angleRadius - Il raggio dell'angolo del tooltip.
+ * @param {number} padding - Il padding del tooltip.
+ * @param {number} pinOffset - L'offset del pin del tooltip.
  * 
- * @returns {String} path - Il path del tooltip.
+ * @returns {string} path - Il path del tooltip.
  */
 function tooltipPathTop (width, height, angleRadius, padding, pinOffset) {
     width = width + (padding * 2);
@@ -376,8 +375,8 @@ function tooltipPathTop (width, height, angleRadius, padding, pinOffset) {
 /// SECTION INITMAPSVG FUNCTIONS ///
 
 /**
- * @module initMapSVG
- * @description Moduli per l'inizializzazione della mappa SVG.
+ * @module utils.init.MapSVG
+ * @description Funzioni per l'inizializzazione della mappa SVG.
  */
 
 /**
@@ -396,9 +395,9 @@ function addMapStyle (svg) {
  * Crea un background monocromatico per la mappa
  * 
  * @param {SVGGElement} svgGroup - Il gruppo a cui aggiungere l'elemento grafico.
- * @param {Number} width - La larghezza del background.
- * @param {Number} height - L'altezza del background.
- * @param {String} bgColor - Un colore espresso in forma esadecimale.
+ * @param {number} width - La larghezza del background.
+ * @param {number} height - L'altezza del background.
+ * @param {string} bgColor - Un colore espresso in forma esadecimale.
  * 
  * @returns {SVGRectElement} background - L'elemento grafico.
  */
@@ -422,7 +421,7 @@ function addBackground (svgGroup, width, height, bgColor){
  * 
  * @param {SVGGElement} svgGroup - Il gruppo a cui aggiungere l'elemento grafico.
  * @param {Array} translation - Le coordinate di traslazione dell'elemento grafico.
- * @param {Object} visibilityRange - L'oggetto che contiene i valori dei range di visibilità.
+ * @param {VisibilityRange} visibilityRange - L'oggetto che contiene i valori dei range di visibilità.
  * 
  * @returns {SVGGElement} areaContainer - L'elemento grafico.
  */
@@ -459,10 +458,9 @@ function addVisibilityArea (svgGroup, translation, visibilityRange) {
  * Aggiorna la posizione dell'elemento grafico dell'area di visibilità spostandone il centro in corrispondenza del pano corrente.
  * 
  * @param {SVGGElement} areaContainer - L'elemento grafico dell'area di visibilità.
- * @param {Array} areaTranslation - Le coordinate di traslazione dell'elemento grafico.
- * @param {Array} currentPanoTranslation - Le coordinate di traslazione del pano corrente.
+ * @param {Array.<number>} areaTranslation - Le coordinate di traslazione dell'elemento grafico.
+ * @param {Array.<number>} currentPanoTranslation - Le coordinate di traslazione del pano corrente.
  */
-
 function moveVisibilityArea (areaContainer, areaTranslation, currentPanoTranslation) {
     svgMatrix.getTransformTranslation(areaContainer).setTranslate(areaTranslation.x+currentPanoTranslation[0], areaTranslation.y-currentPanoTranslation[1]);
 }
@@ -471,7 +469,7 @@ function moveVisibilityArea (areaContainer, areaTranslation, currentPanoTranslat
  * Crea un marker e lo aggiunge al gruppo dei marker.
  * 
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- * @param {Number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
+ * @param {number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
  * 
  * @returns {SVGGElement} pinContainer - Il marker.
  */
@@ -491,7 +489,7 @@ function addMarker (minimap, panoIndex) {
  * Crea l'elemnto grafico del marker in base alla tipologia/priorità e associa gli handler per gli eventi.
  * 
  * @param {SVGGElement} pinContainer - Il gruppo a cui aggiungere il marker.
- * @param {Number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
+ * @param {number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
  */
 function createMarkerPin (pinContainer, panoIndex, minimap) {
@@ -534,7 +532,7 @@ function createMarkerPin (pinContainer, panoIndex, minimap) {
 /**
  * Modifica il tipo di pin del marker da corrente a normale e viceversa.
  * 
- * @param {Number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
+ * @param {number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
  */
 function changePinType (panoIndex, minimap) {
@@ -550,9 +548,9 @@ function changePinType (panoIndex, minimap) {
 /**
  * Aggiorna le classi dei marker (escluso quello associato al pano corrente) in base alla visibilità e priorità dei panos.
  * 
- * @param {Array} markers - L'array dei marker.
- * @param {Number} currentPanoId - L'id del pano corrente.
- * @param {Array} panosVisibility - L'array che contiene la visibilità dei panos rispetto al pano corrente.
+ * @param {Array.<SVGGElement>} markers - L'array dei marker.
+ * @param {number} currentPanoId - L'id del pano corrente.
+ * @param {Object.<string, boolean>} panosVisibility - Oggetto che contiene la visibilità dei panos rispetto al pano corrente.
  * @param {Array} panos - L'array dei panos del set corrente.
  */
 function updateMarkers (markers, currentPanoId, panosVisibility, panos) {
@@ -570,9 +568,9 @@ function updateMarkers (markers, currentPanoId, panosVisibility, panos) {
 /**
  * Crea un tooltip e lo aggiunge al gruppo dei tooltip.
  * 
- * @param {Object} tooltips - L'oggetto che contiene i dati relativi ai tooltip.
- * @param {Array} translation - Le coordinate di traslazione dell'elemento grafico.
- * @param {String} label - L'etichetta del tooltip.
+ * @param {PanosElementsTooltips} tooltips - L'oggetto che contiene i dati relativi ai tooltip.
+ * @param {Array.<number>} translation - Le coordinate di traslazione dell'elemento grafico.
+ * @param {string} label - L'etichetta del tooltip.
  * 
  * @returns {SVGGElement} ttContainer - Il tooltip.
  */
@@ -619,8 +617,8 @@ function addToolTip (tooltips, translation, label) {
 /// SECTION MARKERS EVENT HANDLERS ///
 
 /**
- * @module markersEventHandlers
- * @description Moduli per la gestione degli eventi sui marker.
+ * @module utils.EventHandlers.markers
+ * @description Funzioni per la gestione degli eventi sui marker.
  */
 
 /**
@@ -628,7 +626,7 @@ function addToolTip (tooltips, translation, label) {
  * Scala temporaneamente il marker e mostra un tooltip con l'id del pano.
  * 
  * @param {Event} e - L'oggetto evento associato all'azione che ha innescato la chiamata alla funzione.
- * @param {Number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
+ * @param {number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
  * @param {PanosElementsTooltips} tooltips - L'oggetto che contiene i dati relativi ai tooltip.
  */
 function markerHover (e, panoIndex, tooltips) {
@@ -663,7 +661,7 @@ function markerHover (e, panoIndex, tooltips) {
  * L'operazione viene scelta in base alla modalità di editing attiva.
  * 
  * @param {Event} e - L'oggetto evento associato all'azione che ha innescato la chiamata alla funzione.
- * @param {Number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
+ * @param {number} panoIndex - L'indice del pano a cui è associato il marker all'interno del set corrente.
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
  */
 function markerClick (e, panoIndex, minimap) {
@@ -695,8 +693,8 @@ function markerClick (e, panoIndex, minimap) {
 /// SECTION INITMAPCONTROLS FUNCTIONS ///
 
 /**
- * @module initMapControls
- * @description Moduli per l'inizializzazione dei controlli della mappa.
+ * @module utils.init.MapControls
+ * @description Funzioni per l'inizializzazione dei controlli della mappa.
  */
 
 /**
@@ -735,8 +733,8 @@ function addControlSeparator (container) {
 /// SECTION MAP SVG EVENT HANDLERS ///
 
 /**
- * @module mapSVGEventHandlers
- * @description Moduli per la gestione degli eventi sulla mappa SVG.
+ * @module utils.EventHandlers.mapSVG
+ * @description Funzioni per la gestione degli eventi sulla mappa SVG.
  */
 
 /**
@@ -764,8 +762,8 @@ function mapSVGWheelZoom (e, minimap) {
  * Il risultato sarà una mappa "allargata" in modo tale che il punto in cui è stato effettuato lo zoom rimanga fisso e i marker mantengano la dimensione originale.
  * 
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- * @param {Number} sX - La quantità di ridimensionamento lungo l'asse X.
- * @param {Number} sY - La quantità di ridimensionamento lungo l'asse Y.
+ * @param {number} sX - La quantità di ridimensionamento lungo l'asse X.
+ * @param {number} sY - La quantità di ridimensionamento lungo l'asse Y.
  * @param {DOMPoint} point - Il punto in cui centrare la ridimensione.
  */
 function resizeMap(minimap, sX, sY, point) {
@@ -930,8 +928,8 @@ function translationInBounds (minimap, translation) {
 /// SECTION CONTROLS BAR EVENT HANDLERS ///
 
 /**
- * @module controlsBarEventHandlers
- * @description Moduli per la gestione degli eventi sulla barra dei controlli.
+ * @module utils.EventHandlers.controlsBar
+ * @description Funzioni per la gestione degli eventi sulla barra dei controlli.
  */
 
 /**
@@ -977,7 +975,7 @@ function toggleTooltips (e, minimap) {
  * Mostra/nasconde i tooltip dei marker in base alla scala della mappa.
  * 
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- * @param {Number} startIndex - L'indice di partenza della showList dei tooltip da cui partire a mostrare/nascondere.
+ * @param {number} [startIndex] - L'indice di partenza della showList dei tooltip da cui partire a mostrare/nascondere.
  */
 function toggleTooltipsVisibility (minimap, startIndex=0) {
     const scaleThreshold = minimap.svgScaleValues.x;
@@ -1049,7 +1047,7 @@ function zoomReset (minimap) {
  * Esegue uno zoom lungo entrambi gli assi X e Y apllicato nel centro del container della mappa.
  * 
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- * @param {Number} step - La quantità di zoom da eseguire.
+ * @param {number} step - La quantità di zoom da eseguire.
  */
 function zoom (minimap, step) {
     resizeMap(minimap, step, step, minimap.svgContainerCenter);
@@ -1068,8 +1066,8 @@ function minimizeMap () {
 /// SECTION OTHER EVENT HANDLERS ///
 
 /**
- * @module otherEventHandlers
- * @description Moduli per la gestione degli altri eventi.
+ * @module utils.EventHandlers.other
+ * @description Funzioni per la gestione degli altri eventi.
  */
 
 /**

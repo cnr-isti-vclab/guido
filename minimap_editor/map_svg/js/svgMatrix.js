@@ -3,15 +3,15 @@
  */
 
 /**
- * @module matrixOperations
+ * @module svgMatrix
  */
 
 /**
  * Modifica la matrice di traslazione.
  * 
  * @param {SVGElement} element - Elemento da traslare
- * @param {Number} transX - La quantità di traslazione lungo l'asse X.
- * @param {Number} transY - La quantità di traslazione lungo l'asse Y.
+ * @param {number} transX - La quantità di traslazione lungo l'asse X.
+ * @param {number} transY - La quantità di traslazione lungo l'asse Y.
  */
 function transformTranslate (element, transX, transY) {
     let translate = getTransformTranslation(element);
@@ -28,8 +28,8 @@ function transformTranslate (element, transX, transY) {
  * Modifica la matrice di scala.
  * 
  * @param {SVGElement} element - Elemento da scalare
- * @param {Number} scaleX - La quantità di ridimensionamento lungo l'asse X.
- * @param {Number} scaleY - La quantità di ridimensionamento lungo l'asse Y.
+ * @param {number} scaleX - La quantità di ridimensionamento lungo l'asse X.
+ * @param {number} scaleY - La quantità di ridimensionamento lungo l'asse Y.
  */
 function transformScale (element, scaleX, scaleY) {
     let scale = getTransformScale(element);
@@ -46,9 +46,9 @@ function transformScale (element, scaleX, scaleY) {
  * Modifica la matrice di rotazione.
  * 
  * @param {SVGElement} element - Elemento da ruotare
- * @param {Number} angle - L'angolo di rotazione.
- * @param {Number} x - Coordinata X del punto di rotazione.
- * @param {Number} y - Coordinata Y del punto di rotazione.
+ * @param {number} angle - L'angolo di rotazione.
+ * @param {number} [x] - Coordinata X del punto di rotazione.
+ * @param {number} [y] - Coordinata Y del punto di rotazione.
  */
 function transformRotate (element, angle, x=0, y=0) {
     let rotate = getTransformRotation(element);

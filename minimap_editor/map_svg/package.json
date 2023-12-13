@@ -1,5 +1,10 @@
 {
-  "dependencies": {
+  "scripts": {
+    "jsdoc": "jsdoc .\\js -c .\\jsdoc-conf.json -d JSdoc"
+  },
+  "devDependencies": {
+    "docdash": "^2.0.2",
+    "jsdoc": "^4.0.2",
     "live-server": "^1.2.2"
   }
 }

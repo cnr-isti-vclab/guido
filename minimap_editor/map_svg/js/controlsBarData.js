@@ -1,8 +1,12 @@
 /**
  * @file Questo file contiene i dati per la creazione della barra dei controlli.
  * 
- * @requires utils
+ * @requires utils.js
  * @requires MiniMap
+ */
+
+/**
+ * @module controlsBarData
  */
 
 const controlsBarData = (utils, minimap) => ({

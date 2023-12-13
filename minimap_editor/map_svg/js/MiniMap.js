@@ -1,20 +1,21 @@
 /**
  * @file Questo file contiene la classe MiniMap.
  * 
- * @requires utils
+ * @requires utils.js
  * @requires controlsBarData
  */
 
 /**
- * @typedef {Object} VisibilityRange
- * @property {Number} P0 - Range di visibilità per i pano con priorità 0
- * @property {Number} P1 - Range di visibilità per i pano con priorità 1
- * @property {Number} P2 - Range di visibilità per i pano con priorità 2
+ * @typedef {Object} SetPadding
+ * @property {number} top=0 - Padding superiore
+ * @property {number} left=0 - Padding sinistro
  */
 
 /**
- * @typedef {Object} PanosVisibility
- * @property {Boolean} id - Visibilità del pano con ID specificato
+ * @typedef {Object} VisibilityRange
+ * @property {number} P0=100 - Range di visibilità per i pano con priorità 0
+ * @property {number} P1=150 - Range di visibilità per i pano con priorità 1
+ * @property {number} P2=200 - Range di visibilità per i pano con priorità 2
  */
 
 /**
@@ -26,7 +27,7 @@
 
 /**
  * @typedef {Object} DOMMapElementsSVG
- * @property {Number} margin - Margine dello SVG
+ * @property {number} margin - Margine dello SVG
  * @property {DOMRect} originalViewBox - Oggetto contenente le dimensioni e le coordinate della viewBox originale dello SVG
  * @property {DOMPoint} translation - Oggetto contenente le coordinate di traslazione della viewBox dello SVG
  * @property {DOMPoint} scale - Oggetto contenente le coordinate di scala della viewBox dello SVG
@@ -51,57 +52,57 @@
 
 /**
  * @typedef {Object} PanosElementsMarkers
- * @property {Number} markerRadius - Raggio degli elementi grafici che rappresentano i marker
- * @property {Number} markerStrokeWidth - Spessore del bordo degli elementi grafici che rappresentano i marker
- * @property {Number} markerHoverScaleFactor - Fattore di scala degli elementi grafici che rappresentano i marker al passaggio del mouse
+ * @property {number} markerRadius - Raggio degli elementi grafici che rappresentano i marker
+ * @property {number} markerStrokeWidth - Spessore del bordo degli elementi grafici che rappresentano i marker
+ * @property {number} markerHoverScaleFactor - Fattore di scala degli elementi grafici che rappresentano i marker al passaggio del mouse
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i marker
  * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei marker
  */
 
 /**
  * @typedef {Object} PanosElementsTooltips
- * @property {String} placement - Posizione del tooltip rispetto al marker
- * @property {Number} angleRadius - Raggio dell'angolo del tooltip
- * @property {Number} pinOffset - Offset del pin del tooltip
- * @property {Number} padding - Padding del tooltip
- * @property {Number} pinDistance - Distanza del pin del tooltip dal marker
- * @property {Boolean} showAll - Flag che indica se mostrare tutti i tooltip
- * @property {Number} showScaleStep - Passo di scala per la visualizzazione dei tooltip
- * @property {Number} showListNextThreshold - Soglia di scala per il prossimo showList
- * @property {Number} currentShowListIndex - Indice della showList corrente
- * @property {Array} showLists - Array contenente le showList
+ * @property {string} placement - Posizione del tooltip rispetto al marker
+ * @property {number} angleRadius - Raggio dell'angolo del tooltip
+ * @property {number} pinOffset - Offset del pin del tooltip
+ * @property {number} padding - Padding del tooltip
+ * @property {number} pinDistance - Distanza del pin del tooltip dal marker
+ * @property {boolean} showAll - Flag che indica se mostrare tutti i tooltip
+ * @property {number} showScaleStep - Passo di scala per la visualizzazione dei tooltip
+ * @property {number} showListNextThreshold - Soglia di scala per il prossimo showList
+ * @property {number} currentShowListIndex - Indice della showList corrente
+ * @property {Array.<ShowList>} showLists - Array contenente le showList
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i tooltip
  * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei tooltip
  */
 
 /**
  * @typedef {Object} ShowList
- * @property {Number} scaleThreshold - Soglia di scala per la showList
- * @property {Array} showList - Array contenente gli indici dei pano da mostrare
+ * @property {number} scaleThreshold - Soglia di scala per la showList
+ * @property {Array.<Number>} showList - Array contenente gli indici dei pano da mostrare
  */
 
 /**
- * @constructor MiniMap
+ * @class MiniMap
  * 
  * @classdesc
  * Questa classe contiene i dati del dataset e le informazioni relative alla mappa SVG.
  * 
- * @property {Object} #dataset - Oggetto dataset contenente i dati dei tour, set e pano
- * @property {Number} #currentTourIndex - Indice del tour corrente
- * @property {Number} #currentSetIndex - Indice del set corrente
- * @property {Number} #currentPanoIndex - Indice del pano corrente
- * @property {Number} #currentPanoYaw - Yaw del pano corrente
- * @property {Number} #widthMax - Larghezza massima tra tutti i set del dataset
- * @property {Object} #currentSetPadding - Oggetto contenente i valori di padding superiore e sinistro del set corrente
- * @property {Object} #visibilityRange - Range di visibilità dei pano
- * @property {Array} #panosVisibility - Array di visibilità dei pano
- * @property {Number} #editorMode - Modalità di editor
+ * @property {Object} #dataset=null - Oggetto dataset contenente i dati dei tour, set e pano
+ * @property {number} #currentTourIndex=-1 - Indice del tour corrente
+ * @property {number} #currentSetIndex=-1 - Indice del set corrente
+ * @property {number} #currentPanoIndex=-1 - Indice del pano corrente
+ * @property {number} #currentPanoYaw=0 - Yaw del pano corrente
+ * @property {number} #widthMax=0 - Larghezza massima tra tutti i set del dataset
+ * @property {SetPadding} #currentSetPadding - Oggetto contenente i valori di padding superiore e sinistro del set corrente
+ * @property {VisibilityRange} #visibilityRange - Range di visibilità dei pano
+ * @property {Object.<string, boolean>} #panosVisibility=null - Associa l'ID di ogni pano del set corrente a un flag che indica se è visibile o meno dal pano corrente
+ * @property {number} #editorMode=0 - Modalità di editor
  * @property {Object} #modeTypes - Oggetto contenente le modalità di editor
- * @property {String} #saveURL - URL del server di salvataggio
- * @property {Number} #saveTimeout - Timeout di salvataggio
- * @property {Boolean} #changesUnsaved - Flag che indica se ci sono modifiche non salvate
- * @property {Boolean} #saveTimeoutRunning - Flag che indica se è in corso il timeout di salvataggio
- * @property {Array} #orderedPanos - Array contenente gli indici dei pano ordinati per priorità
+ * @property {string} #saveURL - URL del server di salvataggio
+ * @property {number} #saveTimeout=5000 - Timeout di salvataggio
+ * @property {boolean} #changesUnsaved=false - Flag che indica se ci sono modifiche non salvate
+ * @property {boolean} #saveTimeoutRunning=false - Flag che indica se è in corso il timeout di salvataggio
+ * @property {Array.<number>} #orderedPanos=null - Array contenente gli indici dei pano ordinati per priorità
  * @property {MiniMapDOMMapElements} #DOMMapElements - Oggetto contenente le informazioni relative agli elementi SVG della mappa
  */
 
@@ -119,9 +120,9 @@ export default class MiniMap {
     #widthMax = 0;
     #currentSetPadding = {top: 0, left: 0};
     #visibilityRange = {
-        P0: "100",
-        P1: "150",
-        P2: "200"
+        P0: 100,
+        P1: 150,
+        P2: 200
     };
     #panosVisibility = null;
     #editorMode = 0;
@@ -132,7 +133,7 @@ export default class MiniMap {
     #saveTimeoutRunning = false;
 
     // DOM infos
-    #orderedPanos = [];
+    #orderedPanos = null;
 
     #DOMMapElements = {
         svg: {
@@ -179,10 +180,6 @@ export default class MiniMap {
             },
         }
     };
-  
-    /**
-     * @module MiniMapMethods
-     */
     
     // Getters dataset
     get dataset() {
@@ -361,10 +358,18 @@ export default class MiniMap {
     // Methods
 
     /**
-     * Inizializza l'oggetto MiniMap.
+     * Inizializza la minimappa.
      * 
-     * @param {String} datasetURL - URL del dataset
-     * @param {Number} panoID - ID del pano da visualizzare
+     * @method MiniMap#init
+     * 
+     * @async
+     * 
+     * @param {string} datasetURL - URL del dataset
+     * @param {number} [panoID] - ID del pano da visualizzare
+     * 
+     * @returns {Promise} Promise che si risolve quando la minimappa è stata inizializzata
+     * 
+     * @throws {Error} Errore se il pano con ID specificato non è presente nel dataset
      */
     async init (datasetURL, panoID = -1) {
         try {
@@ -454,11 +459,13 @@ export default class MiniMap {
     /**
      * Recupera gli indici degli array del dataset di tour, set e pano (a seconda del livello di scope selezionato) a partire dall'ID del pano fornito in input.
      * 
-     * @param {Number} panoID - ID del pano
-     * @param {Number} scopeLevel - Livello di scope (0: panos, 1: sets, 2: tours)
-     * @param {Boolean} noskip - Flag che indica se includere i pano skip
+     * @method MiniMap#findIndices
      * 
-     * @returns {Array} - Array contenente gli indici di tour, set e pano oppure null se non è presente nel dataset il pano con ID specificato
+     * @param {number} panoID - ID del pano
+     * @param {number} [scopeLevel] - Livello di scope (0: panos, 1: sets, 2: tours)
+     * @param {boolean} [noskip] - Flag che indica se includere i pano skip
+     * 
+     * @returns {Array.<number>} Array contenente gli indici di tour, set e pano oppure null se non è presente nel dataset il pano con ID specificato
      */
     findIndices (panoID, scopeLevel=2, noskip=true) {
         
@@ -536,6 +543,8 @@ export default class MiniMap {
 
     /**
      * Aggiorna la mappa.
+     * 
+     * @method MiniMap#updateMap
      */
     updateMap () {
 
@@ -554,6 +563,8 @@ export default class MiniMap {
 
     /**
      * Inizializza l'array di visibilità dei pano.
+     * 
+     * @method MiniMap#initPanosVisibility
      */
     initPanosVisibility() {
         this.#panosVisibility = {};
@@ -563,6 +574,8 @@ export default class MiniMap {
 
     /**
      * Aggiorna l'array di visibilità dei pano.
+     * 
+     * @method MiniMap#updatePanosVisibility
      */
     updatePanosVisibility() {
         // resetta visibilità
@@ -592,6 +605,8 @@ export default class MiniMap {
 
     /**
      * Inizializza l'elemento SVG della mappa.
+     * 
+     * @method MiniMap#initMapSVG
      */
     initMapSVG () {
 
@@ -678,10 +693,12 @@ export default class MiniMap {
     /**
      * Calcola la distanza tra due pano.
      * 
+     * @method MiniMap#panosDistance
+     * 
      * @param {Object} panoA - Pano A
      * @param {Object} panoB - Pano B
      * 
-     * @returns {Number} - Distanza tra i due pano
+     * @returns {number} - Distanza tra i due pano
      */
     panosDistance (panoA, panoB) {
         return Math.sqrt(
@@ -693,10 +710,12 @@ export default class MiniMap {
     /**
      * Controlla se due tooltip si intersecano.
      * 
+     * @method MiniMap#checkIntersection
+     * 
      * @param {SVGElement} tooltipA - Tooltip A
      * @param {SVGElement} tooltipB - Tooltip B
      * 
-     * @returns {Boolean} - True se i tooltip si intersecano, false altrimenti
+     * @returns {boolean} - True se i tooltip si intersecano, false altrimenti
      */
     checkIntersection (tooltipA, tooltipB) {
         const tooltipABBox = tooltipA.getBoundingClientRect();
@@ -711,9 +730,11 @@ export default class MiniMap {
     /**
      * Aggiunge una showList.
      * 
-     * @param {Number} sThreshold - Soglia di scala per la showList
+     * @method MiniMap#addShowList
      * 
-     * @returns {Number} - Indice della showList aggiunta o -1 se non è stata aggiunta
+     * @param {number} sThreshold - Soglia di scala per la showList
+     * 
+     * @returns {number} - Indice della showList aggiunta o -1 se non è stata aggiunta
      */
     addShowList (sThreshold) {
         const i = this.tooltipsShowLists.length;
@@ -771,6 +792,8 @@ export default class MiniMap {
     /**
      * Init map controls.
      * 
+     * @method MiniMap#initMapControls
+     * 
      * @param {Object} controlsBar - Oggetto contenente le informazioni relative ai controlli della mappa
      */
     initMapControls (controlsBar) {
@@ -817,8 +840,10 @@ export default class MiniMap {
     /**
      * Effettua una traslazione dello SVG modificandone i valori x e y della viewBox.
      * 
-     * @param {Number} tX - Valore di traslazione sull'asse x
-     * @param {Number} tY - Valore di traslazione sull'asse y
+     * @method MiniMap#svgTranslate
+     * 
+     * @param {number} tX - Valore di traslazione sull'asse x
+     * @param {number} tY - Valore di traslazione sull'asse y
      */
     svgTranslate (tX, tY) {
         this.svg.translation.x += tX;
@@ -831,8 +856,10 @@ export default class MiniMap {
     /**
      * Effettua uno scaling dello SVG modificandone i valori width e height della viewBox.
      * 
-     * @param {Number} sX - Valore di scaling sull'asse x
-     * @param {Number} sY - Valore di scaling sull'asse y
+     * @method MiniMap#svgScale
+     * 
+     * @param {number} sX - Valore di scaling sull'asse x
+     * @param {number} sY - Valore di scaling sull'asse y
      */
     svgScale (sX, sY) {
         this.svg.scale.x *= sX;
@@ -844,6 +871,8 @@ export default class MiniMap {
 
     /**
      * Resettta i valori di traslazione e scaling dello SVG a quelli iniziali.
+     * 
+     * @method MiniMap#svgTransformReset
      */
     svgTransformReset () {
         this.svg.translation.x = 0;
@@ -860,6 +889,8 @@ export default class MiniMap {
     /**
      * Converte le coordinate del punto passato come parametro in coordinate SVG.
      * 
+     * @method MiniMap#toSVGCoordSystem
+     * 
      * @param {DOMPoint} point - Punto da convertire
      * 
      * @returns {DOMPoint} - Punto convertito
@@ -872,6 +903,8 @@ export default class MiniMap {
     /**
      * Converte le coordinate del punto passato come parametro in coordinate utente.
      * 
+     * @method MiniMap#toClientCoordSystem
+     * 
      * @param {DOMPoint} point - Punto da convertire
      * 
      * @returns {DOMPoint} - Punto convertito
@@ -883,6 +916,8 @@ export default class MiniMap {
 
     /**
      * Aggiorna la posizione degli elementi legati ai pano tenendo conto del margine di sicurezza.
+     * 
+     * @method MiniMap#updateSVGPanosElementsPosition
      */
     updateSVGPanosElementsPosition () {
         this.#DOMMapElements.panosElements.translation.x = this.svgMargin + this.#currentSetPadding.left;
@@ -891,6 +926,8 @@ export default class MiniMap {
 
     /**
      * Calcola le dimensioni della porzione di SVG visibile in base alla dimensione del container e il relativo centro.
+     * 
+     * @method MiniMap#updateSVGContainer
      */
     updateSVGContainer () {
         const containerBB = this.svg.DOMElement.parentNode.getBoundingClientRect();
@@ -906,6 +943,8 @@ export default class MiniMap {
 
     /**
      * Muove il viewport dello SVG in modo che il marker del pano corrente sia visibile.
+     * 
+     * @method MiniMap#moveSVGViewportToCurrentPano
      */
     moveSVGViewportToCurrentPano () {
 
@@ -924,6 +963,8 @@ export default class MiniMap {
     /**
      * Restituisce la stringa corrispondente alla modalità di editor.
      * 
+     * @method MiniMap#getEditorModeString
+     * 
      * @param {number} modeNumber - Numero della modalità di editor
      * 
      * @returns {string} - Stringa corrispondente alla modalità di editor
@@ -934,6 +975,8 @@ export default class MiniMap {
 
     /**
      * Cambia la modalità di editor in quella specificata oppure in quella default.
+     * 
+     * @method MiniMap#toggleEditorMode
      */
     toggleEditorMode (mode) {
         if (typeof mode === "string") {
@@ -949,6 +992,8 @@ export default class MiniMap {
 
     /**
      * Cambia la visibilità del pano con ID specificato.
+     * 
+     * @method MiniMap#togglePanoVisibility
      * 
      * @param {number} id - ID del pano
      */
@@ -971,6 +1016,8 @@ export default class MiniMap {
 
     /**
      * Cambia il valore di verità rispetto al fatto che tutti i tooltip siano visibili o meno.
+     * 
+     * @method MiniMap#toggleShowAllTooltips
      */
     toggleShowAllTooltips () {
         this.tooltips.showAll = !this.tooltips.showAll;
@@ -978,6 +1025,8 @@ export default class MiniMap {
 
     /**
      * Salva le modifiche effettuate al dataset sul server.
+     * 
+     * @method MiniMap#saveDataset
      */
     saveDataset () {
         if (this.saveTimeoutRunning) {
@@ -1002,6 +1051,8 @@ export default class MiniMap {
     /**
      * Modifica la rotazione del marker del pano corrente.
      * 
+     * @method MiniMap#updateCurrentPanoYaw
+     * 
      * @param {number} yaw - Valore di rotazione
      */
     updateCurrentPanoYaw (yaw) {
@@ -1009,6 +1060,8 @@ export default class MiniMap {
 
     /**
      * Attiva o disattiva lo skip del pano con ID specificato e prova a salvare le modifiche effettuate al dataset sul server.
+     * 
+     * @method MiniMap#togglePanoSkip
      * 
      * @param {number} id - ID del pano
      */
@@ -1029,8 +1082,10 @@ export default class MiniMap {
     /**
      * Permette di cambiare il pano corrente in base all'ID specificato cercandolo all'interno del set corrente.
      * 
-     * @param {Number} panoIndex - L'indice del pano che deve diventare il corrente.
-     * @param {boolean} clickInMinimap - Flag che indica se l'interazione è avvenuta nella minimappa
+     * @method MiniMap#changePano
+     * 
+     * @param {number} panoIndex - L'indice del pano che deve diventare il corrente.
+     * @param {boolean} [clickInMinimap] - Flag che indica se l'interazione è avvenuta nella minimappa
      */
     changePano (panoIndex, clickInMinimap = false) {
 
@@ -1076,8 +1131,10 @@ export default class MiniMap {
     /**
      * Permette di cambiare il pano corrente in base all'ID specificato cercandolo tra tutti i set all'interno del tour corrente oppure tra tutti i set di tutti i tour disponibili a seconda dello skipLevel scelto e aggiornando la minimappa.
      * 
+     * @method MiniMap#changeMap
+     * 
      * @param {number} panoid - ID del pano
-     * @param {number} scopeLevel - Livello di scope (0: panos, 1: sets, 2: tours)
+     * @param {number} [scopeLevel] - Livello di scope (0: panos, 1: sets, 2: tours)
      */
     changeMap (panoID, scopeLevel = 2) {
 
@@ -1097,6 +1154,8 @@ export default class MiniMap {
 
     /**
      * Resetta i campi di #DOMMapElements che contenevano riferimenti ai precedenti elementi SVG in modo da poter aggiornare la mappa tramite la funzione updateMap().
+     * 
+     * @method MiniMap#resetDOMMapElements
      */
     resetDOMMapElements () {
         // resetto elemento SVG del DOM eliminando tutti i figli
