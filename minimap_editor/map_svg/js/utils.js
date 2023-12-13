@@ -206,11 +206,14 @@ function attributeSwitch (element, attrA, attrB) {
 /**
  * Invia una richiesta di salvataggio dei dati al server, stampa il messaggio di risposta in console e mostra un dialog in caso di errore.
  * 
+ * @async
  * @param {Object} dataset - L'oggetto dataset da salvare.
  * @param {String} url - L'url a cui inviare la richiesta di salvataggio.
+ * @param {Boolean} errorShowModal - Indica se mostrare o meno il dialog in caso di errore.
  * 
+ * @returns {Promise<Boolean>} r - Indica se la richiesta è andata a buon fine.
  */
-async function sendData (dataset, url) {
+async function sendData (dataset, url, errorShowModal = true) {
     const payload = {
         method: 'POST',
         headers: {
@@ -219,7 +222,7 @@ async function sendData (dataset, url) {
         body: JSON.stringify(dataset)
     }
 
-    const dialog = document.querySelector("dialog");
+    let r = true;
     let message = "Saving log: ";
 
     try {
@@ -232,11 +235,16 @@ async function sendData (dataset, url) {
             message += result.message;
         }
     } catch (error) {
-        dialog.showModal();
+        if (errorShowModal) {
+            const dialog = document.querySelector("dialog");
+            dialog.showModal();
+        }
+        r = false;
         message += error.message;
     }
     
     console.log(message);
+    return r;
 }
 
 /// SECTION SVG PATHS ///

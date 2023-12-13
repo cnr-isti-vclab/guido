@@ -11,8 +11,26 @@
   </head>
   <body>
     <dialog id="minimap_dialog">
-      <button title="Close"></button>
-      <p>Salvataggio fallito.</p>
+      <div class="minimap_dialog_landing">
+        <p>Si è verificato un errore nel salvataggio delle modifiche apportate.</p>
+        <p>Ciò potrebbe essere dovuto a un problema di connessione o a un errore del server.</p>
+        <ul>
+          <li><b>Riprova</b>: tenta nuovamente il salvataggio.</li>
+          <li><b>Prosegui</b>: continua a modificare.</li>
+        </ul>
+        <div>
+          <button id="minimap_dialog_retry_btn" title="Retry">Riprova</button>
+          <button id="minimap_dialog_continue_btn" title="Continue">Prosegui</button>
+        </div>
+      </div>
+      <div class="minimap_dialog_loading minimap_dialog_hidden">
+        <p>Attendere prego...</p>
+        <svg class="minimap_dialog_loader_svg" viewBox="0 -5.5 37 16.5">
+          <circle cx="5.5" cy="5.5" r="5"></circle>
+          <circle cx="18.5" cy="5.5" r="5"></circle>
+          <circle cx="31.5" cy="5.5" r="5"></circle>
+        </svg>
+      </div>
     </dialog>
 
     <div style = "display: flex; flex-direction: column; width: fit-content; gap: 5px; padding: 20px;">

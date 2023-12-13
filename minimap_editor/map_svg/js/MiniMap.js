@@ -407,8 +407,37 @@ export default class MiniMap {
             // Add event handlers
             document.getElementById("btn_map_open").addEventListener("click", utils.openIconClick);
         
-            document.querySelector("#minimap_dialog > button").addEventListener("click", () => {
-              document.getElementById("minimap_dialog").close();
+            document.querySelector("#minimap_dialog #minimap_dialog_retry_btn").addEventListener("click", async () => {
+                document.querySelector(".minimap_dialog_landing").classList.toggle("minimap_dialog_hidden");
+                document.querySelector(".minimap_dialog_loading").classList.toggle("minimap_dialog_hidden");
+
+                // riprova a salvare i dati per 5 volte
+                let result = false;
+                let tentatives = 0;
+                
+                while (!result && tentatives < 5) {
+                    result = await utils.sendData(this.dataset, this.saveURL, false);
+                    tentatives++;
+
+                    if (!result) {
+                        setTimeout(() => {}, this.#saveTimeout);
+                    }
+                }
+
+                // se il salvataggio è andato a buon fine chiude il dialog settando il flag di modifiche non salvate a true
+                if (result) {
+                    this.#changesUnsaved = true;
+                    document.getElementById("minimap_dialog").close();
+                }
+
+                // ripristina l'interfaccia del dialog
+                document.querySelector(".minimap_dialog_landing").classList.toggle("minimap_dialog_hidden");
+                document.querySelector(".minimap_dialog_loading").classList.toggle("minimap_dialog_hidden");
+            });
+        
+            document.querySelector("#minimap_dialog #minimap_dialog_continue_btn").addEventListener("click", () => {
+                this.#changesUnsaved = true;
+                document.getElementById("minimap_dialog").close();
             });
         
             const m = document.getElementById("map_container");
