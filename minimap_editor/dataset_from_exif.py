@@ -39,24 +39,15 @@ def get_exif_gps(image_file_path):
     exif_gps = exif_data[IFD.GPSInfo]
 
     from PIL.ExifTags import GPS
-    gps_latitude_ref = exif_gps[GPS.GPSLatitudeRef]
-    gps_latitude = exif_gps[GPS.GPSLatitude]
-    gps_longitude_ref = exif_gps[GPS.GPSLongitudeRef]
-    gps_longitude = exif_gps[GPS.GPSLongitude]
-    gps_altitude = exif_gps[GPS.GPSAltitude]
-    
-    if GPS.GPSImgDirection in exif_gps:
-        gps_direction = float(exif_gps[GPS.GPSImgDirection])
-    else:
-        gps_direction = 0
 
-    gps_latitude_dd = dms_to_dd(gps_latitude, gps_latitude_ref)
-    gps_longitude_dd = dms_to_dd(gps_longitude, gps_longitude_ref)
-    gps_altitude = float(gps_altitude)
+    gps_info = {
+        "latitude": dms_to_dd(exif_gps[GPS.GPSLatitude], exif_gps[GPS.GPSLatitudeRef]),
+        "longitude": dms_to_dd(exif_gps[GPS.GPSLongitude], exif_gps[GPS.GPSLongitudeRef]),
+        "altitude": float(exif_gps[GPS.GPSAltitude]),
+        "direction": float(exif_gps[GPS.GPSImgDirection]) if GPS.GPSImgDirection in exif_gps else 0
+    }
 
-    gps_pos = (gps_latitude_dd, gps_longitude_dd, gps_altitude, gps_direction)
-
-    return gps_pos
+    return gps_info
 
 # Conversione da DMS a DD
 def dms_to_dd(dms, dms_ref):
@@ -71,52 +62,45 @@ def dms_to_dd(dms, dms_ref):
     return dd
 
 # Calcolo del bounding box in latitudine e longitudine
-# gps_pos tuple float (dd_latitude, dd_longitude, altitude)
-# bb_latlon list float [bb_latitude_max, bb_latitude_min, bb_longitude_max, bb_longitude_min, bb_altitude_max, bb_altitude_min, validity flag]
-def calculate_latlon_bb(gps_pos, bb_latlon):
-
-    if bb_latlon[6] == 0:
-        bb_latlon[0] = gps_pos[0]
-        bb_latlon[1] = gps_pos[0]
-        bb_latlon[2] = gps_pos[1]
-        bb_latlon[3] = gps_pos[1]
-        bb_latlon[4] = gps_pos[2]
-        bb_latlon[5] = gps_pos[2]
-        bb_latlon[6] = 1
+def calculate_latlon_bb(gps_pos, bb_latlon, bb_latlon_first):
+    if bb_latlon_first:
+        bb_latlon["latitude_max"] = gps_pos["latitude"]
+        bb_latlon["latitude_min"] = gps_pos["latitude"]
+        bb_latlon["longitude_max"] = gps_pos["longitude"]
+        bb_latlon["longitude_min"] = gps_pos["longitude"]
+        bb_latlon["altitude_max"] = gps_pos["altitude"]
+        bb_latlon["altitude_min"] = gps_pos["altitude"]
     else:
-        if gps_pos[0] > bb_latlon[0]: 
-            bb_latlon[0] = gps_pos[0]
-        if gps_pos[0] < bb_latlon[1]: 
-            bb_latlon[1] = gps_pos[0]
-        if gps_pos[1] > bb_latlon[2]: 
-            bb_latlon[2] = gps_pos[1]
-        if gps_pos[1] < bb_latlon[3]: 
-            bb_latlon[3] = gps_pos[1]
-        if gps_pos[2] > bb_latlon[4]: 
-            bb_latlon[4] = gps_pos[2]
-        if gps_pos[2] < bb_latlon[5]: 
-            bb_latlon[5] = gps_pos[2]
+        if gps_pos["latitude"] > bb_latlon["latitude_max"]: 
+            bb_latlon["latitude_max"] = gps_pos["latitude"]
+        if gps_pos["latitude"] < bb_latlon["latitude_min"]: 
+            bb_latlon["latitude_min"] = gps_pos["latitude"]
+        if gps_pos["longitude"] > bb_latlon["longitude_max"]: 
+            bb_latlon["longitude_max"] = gps_pos["longitude"]
+        if gps_pos["longitude"] < bb_latlon["longitude_min"]: 
+            bb_latlon["longitude_min"] = gps_pos["longitude"]
+        if gps_pos["altitude"] > bb_latlon["altitude_max"]: 
+            bb_latlon["altitude_max"] = gps_pos["altitude"]
+        if gps_pos["altitude"] < bb_latlon["altitude_min"]: 
+            bb_latlon["altitude_min"] = gps_pos["altitude"]
 
 # Calcolo del bounding box in proiezione
 # coord tuple float (easting, northing)
-# bb list float [easting_min, northing_min, easting_max, northing_max, validity flag]
-def calculate_proj_bb(coord, bb):
-
-    if bb[4] == 0:
-        bb[0] = coord[0]
-        bb[1] = coord[1]
-        bb[2] = coord[0]
-        bb[3] = coord[1]
-        bb[4] = 1
+def calculate_proj_bb(coord, bb, bb_first):
+    if bb_first:
+        bb["easting_min"] = coord[0]
+        bb["northing_min"] = coord[1]
+        bb["easting_max"] = coord[0]
+        bb["northing_max"] = coord[1]
     else:
-        if coord[0] < bb[0]:
-            bb[0] = coord[0]
-        elif coord[0] > bb[2]:
-            bb[2] = coord[0]
-        if coord[1] < bb[1]:
-            bb[1] = coord[1]
-        elif coord[1] > bb[3]:
-            bb[3] = coord[1]
+        if coord[0] < bb["easting_min"]:
+            bb["easting_min"] = coord[0]
+        elif coord[0] > bb["easting_max"]:
+            bb["easting_max"] = coord[0]
+        if coord[1] < bb["northing_min"]:
+            bb["northing_min"] = coord[1]
+        elif coord[1] > bb["northing_max"]:
+            bb["northing_max"] = coord[1]
 
 # Proiezione tipo UTM ma con meridiano centrale arbitrario
 K0 = 0.9996
@@ -263,14 +247,6 @@ if __name__ == "__main__":
 
             set_central_meridian = 0
 
-            # Bounding box latitudine e longitudine
-            # list float [bb_latitude_max, bb_latitude_min, bb_longitude_max, bb_longitude_min, bb_altitude_max, bb_altitude_min, validity flag]
-            set_bb_latlon = [0,0,0,0,0,0,0]
-
-            # Bounding box
-            # list float [bb_easting_min, bb_northing_min, bb_easting_max, bb_northing_max, validity flag]
-            set_bb = [0,0,0,0,0]
-
             for set in sorted(os.listdir(tour_path)):
                 set_path = os.path.join(tour_path, set)
                 if os.path.isdir(set_path):   
@@ -280,13 +256,27 @@ if __name__ == "__main__":
                         "name": set,
                         "order": set_id,
                         "panos": [],
+                        "boundingbox_latlon": {
+                            "latitude_max": 0,
+                            "latitude_min": 0,
+                            "longitude_max": 0,
+                            "longitude_min": 0,
+                            "altitude_max": 0,
+                            "altitude_min": 0
+                        },
+                        "boundingbox": {
+                            "easting_min": 0,
+                            "northing_min": 0,
+                            "easting_max": 0,
+                            "northing_max": 0
+                        }
                     }
 
                     set_id += 1
 
                     set_central_meridian = 0
-                    set_bb_latlon[6] = 0
-                    set_bb[4] = 0
+                    bb_latlon_first = True
+                    bb_first = True
 
                     for file in sorted(os.listdir(set_path)):
                         f = os.path.join(set_path, file)
@@ -302,56 +292,44 @@ if __name__ == "__main__":
                             "skip": False,
                             "skipLinks": [],
                             "rotation": [],
-                            "initialYaw": gps[3],
+                            "initialYaw": gps["direction"],
                             "horizontalPitch": 0,
                             "horizontalRoll": 0,
-                            "latitude": gps[0],
-                            "longitude": gps[1],
-                            "altitude": gps[2],
+                            "latitude": gps["latitude"],
+                            "longitude": gps["longitude"],
+                            "altitude": gps["altitude"],
                         }
 
                         set_entry["panos"].append(pano)
                         pano_id += 1
 
                         # calcolo del bounding box in latitudine e longitudine
-                        calculate_latlon_bb(gps, set_bb_latlon)
+                        calculate_latlon_bb(gps, set_entry["boundingbox_latlon"], bb_latlon_first)
+
+                        if bb_latlon_first:
+                            bb_latlon_first = False
 
                         # controllo se il bounding box è troppo grande
-                        if (set_bb_latlon[2]-set_bb_latlon[3] > 6) :
+                        if (set_entry["boundingbox_latlon"]["longitude_max"]-set_entry["boundingbox_latlon"]["longitude_min"] > 6) :
                             raise ValueError(f"Area {set_entry['name']} is too big")
                     
                     # Calcolo il meridiano centrale della zona di proiezione
-                    set_central_meridian = int((set_bb_latlon[2] + set_bb_latlon[3]) / 2)
-
-                    # Inserimento del bounding box nel set_entry
-                    set_entry["boundingbox_latlon"] = {
-                        "latitude_max": set_bb_latlon[0],
-                        "latitude_min": set_bb_latlon[1],
-                        "longitude_max": set_bb_latlon[2],
-                        "longitude_min": set_bb_latlon[3],
-                        "altitude_max": set_bb_latlon[4],
-                        "altitude_min": set_bb_latlon[5]
-                    }
+                    set_central_meridian = int((set_entry["boundingbox_latlon"]["longitude_max"] + set_entry["boundingbox_latlon"]["longitude_min"]) / 2)
 
                     # Iterazione sugli elementi del set_entry per calcolare le coordinate rispetto la proiezione scelta e il relativo bounding box
                     for pano in set_entry["panos"]:
                         # Calcolo della proiezione
                         coord = coord_projection(pano["latitude"], pano["longitude"], set_central_meridian)
 
-                        # # Inserimento delle coordinate nel set_entry
+                        # Inserimento delle coordinate nel set_entry
                         pano["easting"] = coord[0]
                         pano["northing"] = coord[1]
 
                         # Calcolo del bounding box
-                        calculate_proj_bb(coord, set_bb)
+                        calculate_proj_bb(coord, set_entry["boundingbox"], bb_first)
 
-                    # Inserimento del bounding box nel set_entry
-                    set_entry["boundingbox"] = {
-                        "easting_min": set_bb[0],
-                        "northing_min": set_bb[1],
-                        "easting_max": set_bb[2],
-                        "northing_max": set_bb[3]
-                    }
+                        if bb_first:
+                            bb_first = False
 
                     # Iterazione sugli elementi del set_entry per calcolare la traslazione rispetto al vertice in basso a sinistra del bounding box
                     for pano in set_entry["panos"]:
