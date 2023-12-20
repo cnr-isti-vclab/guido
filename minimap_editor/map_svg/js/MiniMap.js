@@ -67,18 +67,11 @@
  * @property {number} padding - Padding del tooltip
  * @property {number} pinDistance - Distanza del pin del tooltip dal marker
  * @property {boolean} showAll - Flag che indica se mostrare tutti i tooltip
- * @property {number} showScaleStep - Passo di scala per la visualizzazione dei tooltip
- * @property {number} showListNextThreshold - Soglia di scala per il prossimo showList
- * @property {number} currentShowListIndex - Indice della showList corrente
- * @property {Array.<ShowList>} showLists - Array contenente le showList
+ * @property {number} showListScaleStep - Step dopo il quale aggiornare la showList
+ * @property {number} showListLastThreshold - Soglia di scala dell'ultimo aggiornamento della showList
+ * @property {Array.<Number>} showList - Array contenente gli indici dei pano da mostrare
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i tooltip
  * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei tooltip
- */
-
-/**
- * @typedef {Object} ShowList
- * @property {number} scaleThreshold - Soglia di scala per la showList
- * @property {Array.<Number>} showList - Array contenente gli indici dei pano da mostrare
  */
 
 /**
@@ -171,10 +164,9 @@ export default class MiniMap {
                 padding: 5,
                 pinDistance: 10,
                 showAll: false,
-                showScaleStep: 0.005,
-                showListNextThreshold: 1,
-                currentShowListIndex: 0,
-                showLists: [],
+                showListScaleStep: 0.005,
+                showListLastThreshold: 1,
+                showList: [],
                 DOMElement: null,
                 DOMElements: []
             },
@@ -307,10 +299,6 @@ export default class MiniMap {
 
     get orderedPanos () {
         return this.#orderedPanos;
-    }
-
-    get tooltipsShowLists () {
-        return this.tooltips.showLists;
     }
 
     getMarkerDOMElement (panoIndex) {
@@ -667,7 +655,7 @@ export default class MiniMap {
 
         let panosByPriority = [[], [], []];
 
-        // add markers and tooltips to respective groups for each pano
+        // aggiunge markers e tooltips ai rispettivi gruppi per ogni pano
         for (const [i, pano] of this.currentSet.panos.entries()) {
             this.markers.DOMElements.push(utils.addMarker (this, i));
             
@@ -681,12 +669,15 @@ export default class MiniMap {
             }
         }
 
+        // crea un array di pano ordinati per priorità
         this.#orderedPanos = panosByPriority[2].concat(panosByPriority[1], panosByPriority[0]);
 
-        this.addShowList(1);
+        // init tooltips showList
+        this.updateShowList();
 
+        // se è attiva la visualizzazione di tutti i tooltip mostra quelli indicati dalla showList
         if (this.tooltips.showAll) {
-            utils.toggleTooltipsVisibility(this);
+            utils.toggleTooltipsVisibility(this.tooltips.showList, this.tooltips.DOMElements);
         }
     }
 
@@ -728,65 +719,41 @@ export default class MiniMap {
     }
 
     /**
-     * Aggiunge una showList.
+     * Aggiorna la showList dei tooltip.
      * 
-     * @method MiniMap#addShowList
-     * 
-     * @param {number} sThreshold - Soglia di scala per la showList
-     * 
-     * @returns {number} - Indice della showList aggiunta o -1 se non è stata aggiunta
+     * @method MiniMap#updateShowList
      */
-    addShowList (sThreshold) {
-        const i = this.tooltipsShowLists.length;
+    updateShowList () {
+        // resetta showList
+        this.tooltips.showList = [];
 
-        this.tooltipsShowLists[i] = {
-            scaleThreshold: sThreshold,
-            showList: []
-        };
+        // aggiunge a showList i pano i cui tooltip non si intersecano tra loro in ordine di priorità escludendo quelli con skip=true e il pano corrente
+        for (const panoIndex of this.#orderedPanos) {
+            if (!this.currentSet.panos[panoIndex].skip && this.currentSet.panos[panoIndex].id !== this.currentPano.id) {
+                if (this.tooltips.showList.length === 0) {
+                    this.tooltips.showList.push(panoIndex);
+                } else {
+                    const tooltip = this.tooltips.DOMElements[panoIndex];
+                    let check = true;
 
-        if (i === 0) {
-            this.tooltipsShowLists[i].showList.push(this.#orderedPanos[0]);
-            this.#orderedPanos.splice(0, 1);
-        }
+                    for (const idx of this.tooltips.showList) {
+                        const tooltip2 = this.tooltips.DOMElements[idx];
 
-        let j = 0;
+                        if (this.checkIntersection(tooltip, tooltip2)) {
+                            check = false;
+                            break;
+                        }
+                    }
 
-        while (j < this.#orderedPanos.length) {
-            const panoIndex = this.#orderedPanos[j];
-            const tooltip = this.tooltips.DOMElements[panoIndex];
-
-            let check = true;
-
-            for (const list of this.tooltipsShowLists) {
-                for (const idx of list.showList) {
-                    const tooltip2 = this.tooltips.DOMElements[idx];
-
-                    if (this.checkIntersection(tooltip, tooltip2)) {
-                        check = false;
-                        break;
+                    if (check) {
+                        this.tooltips.showList.push(panoIndex);
                     }
                 }
             }
-
-            if (check) {
-                this.tooltipsShowLists[i].showList.push(panoIndex);
-                this.#orderedPanos.splice(j, 1);
-            } else {
-                j++;
-            }
         }
 
-        if (this.tooltipsShowLists[i].showList.length === 0) {
-            // rimuove showList vuota
-            this.tooltipsShowLists.splice(i, 1);
-
-            return -1;
-        } else {
-            // aggiorna il valore di soglia per il prossimo showList
-            this.tooltips.showListNextThreshold = this.tooltipsShowLists[i].scaleThreshold-this.tooltips.showScaleStep;
-
-            return i;
-        }
+        // stabilisce la prossima soglia di scala sotto la quale aggiornare la showList
+        this.tooltips.showListLastThreshold = this.svgScaleValues.x;
     }
 
     /**
@@ -1111,11 +1078,9 @@ export default class MiniMap {
             utils.changePinType (this.#currentPanoIndex, this);
 
             // Se showAll è abilitato, aggiorna la visibilità dei tooltip
-            if (this.tooltips.showAll) {
-                utils.resetTooltipsVisibility(this);
-                utils.toggleTooltipsVisibility(this);
-            }
+            utils.updateTooltipsVisibility(this);
 
+            // Aggiorna la posizione dell'area di visibilità
             utils.moveVisibilityArea(this.visibilityArea.DOMElement, this.panosElementsTranslation, this.currentPano.translation);
 
             // Aggiorna le classi dei marker
@@ -1146,7 +1111,7 @@ export default class MiniMap {
             [this.#currentTourIndex, this.#currentSetIndex, this.#currentPanoIndex] = [t, s, p];
 
             this.resetDOMMapElements();
-
+console.log("changeMap");
             // aggiorno la mappa
             this.updateMap();
         }
@@ -1170,11 +1135,6 @@ export default class MiniMap {
         // resetto i campi di #DOMMapElements che contenevano riferimenti ai precedenti elementi SVG
         this.markers.DOMElements = []
         this.tooltips.DOMElements = []
-
-        // resetto l'array di showLists e le relative variabili
-        this.tooltips.showLists = [];
-        this.tooltips.showListNextThreshold = 1;
-        this.tooltips.currentShowListIndex = 0;
     }
 
 }

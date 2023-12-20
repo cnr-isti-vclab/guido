@@ -799,40 +799,11 @@ function resizeMap(minimap, sX, sY, point) {
 
         // Aggiorna la visibilità dei tooltip
         if (minimap.tooltips.showAll) {
-            if (sX < 1) { // Zoom in
-                // Controlla se è possibile mostrare altri tooltip
-                if ( minimap.tooltips.currentShowListIndex < minimap.tooltipsShowLists.length-1
-                    && mapScale.x <= minimap.tooltipsShowLists[minimap.tooltips.currentShowListIndex+1].scaleThreshold)
-                {
-                    resetTooltipsVisibility(minimap);
-                    toggleTooltipsVisibility(minimap);
-                }
-            } else { // Zoom out
-                // Controlla se è necessario nascondere alcuni tooltip
-                if ( minimap.tooltips.currentShowListIndex > 0
-                    && mapScale.x >= minimap.tooltipsShowLists[minimap.tooltips.currentShowListIndex].scaleThreshold)
-                {
-                    resetTooltipsVisibility(minimap);
-                    toggleTooltipsVisibility(minimap);
-                }
+            if ((sX < 1 && mapScale.x <= minimap.tooltips.showListLastThreshold-minimap.tooltips.showListScaleStep) ||
+                (sX > 1 && mapScale.x >= minimap.tooltips.showListLastThreshold)) {
+                    updateTooltipsVisibility(minimap);
             }
         }
-
-        // Prova ad aggiornare la showList dei tooltip
-        let newShowListIndex = -1;
-
-        if (minimap.orderedPanos.length > 0 && mapScale.x <= minimap.tooltips.showListNextThreshold) {
-            newShowListIndex = minimap.addShowList(mapScale.x);
-        }
-
-        if (newShowListIndex !== -1) {
-            minimap.tooltips.currentShowListIndex = newShowListIndex;
-
-            if (minimap.tooltips.showAll) {
-                toggleTooltipsVisibility(minimap, newShowListIndex);
-            }
-        }
-
     }
 }
 
@@ -965,52 +936,51 @@ function activeVisibilityManageMode (e, minimap) {
  */
 function toggleTooltips (e, minimap) {
     e.target.toggleAttribute("active");
+
+    // Se non è attiva la modalità di visualizzazione dei tooltip, aggiorna la showList
+    if (!minimap.tooltips.showAll) {
+        minimap.updateShowList();
+    }
+
+    // Aggiorna lo stato della modalità di visualizzazione dei tooltip
     minimap.toggleShowAllTooltips();
 
-    // Show tooltips
-    toggleTooltipsVisibility (minimap);
+    // Mostra/Nasconde i tooltip
+    toggleTooltipsVisibility (minimap.tooltips.showList, minimap.tooltips.DOMElements);
 }
 
 /**
- * Mostra/nasconde i tooltip dei marker in base alla scala della mappa.
+ * Mostra/nasconde i tooltip dei marker in base alla showList.
+ * 
+ * @param {Array.<number>} showList - L'array degli indici dei tooltip da mostrare/nascondere.
+ * @param {Array.<SVGElement>} tooltips - L'array dei tooltip.
+ */
+function toggleTooltipsVisibility (showList, tooltips) {
+    for (const index of showList) {
+        tooltips[index].classList.toggle("invisible");
+    }
+}
+
+/**
+ * Aggiorna la visibilità dei tooltip quando la modalità di visualizzazione è attiva.
  * 
  * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- * @param {number} [startIndex] - L'indice di partenza della showList dei tooltip da cui partire a mostrare/nascondere.
  */
-function toggleTooltipsVisibility (minimap, startIndex=0) {
-    const scaleThreshold = minimap.svgScaleValues.x;
-    let i = startIndex;
-    
-    while (i < minimap.tooltipsShowLists.length && minimap.tooltipsShowLists[i].scaleThreshold >= scaleThreshold) {
-
-        for (const index of minimap.tooltipsShowLists[i].showList) {
-            if (minimap.currentSet.panos[index].id !== minimap.currentPano.id) {
-                minimap.tooltips.DOMElements[index].classList.toggle("invisible");
+function updateTooltipsVisibility (minimap) {
+    if (minimap.tooltips.showAll) {
+        // se i tooltip della showList sono visibili, li nasconde
+        for (const index of minimap.tooltips.showList) {
+            if (!minimap.tooltips.DOMElements[index].classList.contains("invisible")) {
+                minimap.tooltips.DOMElements[index].classList.add("invisible");
             }
         }
 
-        i++;
+        // aggiorna la showList
+        minimap.updateShowList();
+        
+        // mostra i tooltip della showList
+        toggleTooltipsVisibility (minimap.tooltips.showList, minimap.tooltips.DOMElements);
     }
-
-}
-
-/**
- * Riporta la visibilità dei tooltip dei marker allo stato iniziale in base alla scala della mappa.
- * 
- * @param {MiniMap} minimap - L'oggetto MiniMap a cui è associata la mappa.
- */
-function resetTooltipsVisibility (minimap) {
-    for (const tooltip of minimap.tooltips.DOMElements) {
-        if (!tooltip.classList.contains("invisible")) {
-            tooltip.classList.add("invisible");
-        }
-    }
-
-    let i = 0;
-    while (i < minimap.tooltipsShowLists.length && minimap.tooltipsShowLists[i].scaleThreshold >= minimap.svgScaleValues.x) {
-        i++;
-    }
-    minimap.tooltips.currentShowListIndex = i-1;
 }
 
 /**
@@ -1036,10 +1006,7 @@ function zoomReset (minimap) {
     minimap.svgTransformReset();
 
     // Reset tooltips visibility
-    resetTooltipsVisibility (minimap);
-    if (minimap.tooltips.showAll) {
-        toggleTooltipsVisibility (minimap);
-    }
+    updateTooltipsVisibility (minimap);
 
 }
 
@@ -1118,6 +1085,6 @@ export {
     updateContainer,
     sendData,
     translationInBounds,
-    resetTooltipsVisibility,
+    updateTooltipsVisibility,
     toggleTooltipsVisibility,
 };
