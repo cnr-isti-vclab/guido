@@ -420,7 +420,7 @@ function addBackground (svgGroup, width, height, bgColor){
  * Aggiunge un elemento grafico per indicare l'area dei panos visibili dal pano corrente.
  * 
  * @param {SVGGElement} svgGroup - Il gruppo a cui aggiungere l'elemento grafico.
- * @param {Array} translation - Le coordinate di traslazione dell'elemento grafico.
+ * @param {Array.<number>} translation - Le coordinate di traslazione dell'elemento grafico.
  * @param {VisibilityRange} visibilityRange - L'oggetto che contiene i valori dei range di visibilità.
  * 
  * @returns {SVGGElement} areaContainer - L'elemento grafico.

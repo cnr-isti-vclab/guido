@@ -56,7 +56,7 @@
  * @property {number} markerStrokeWidth - Spessore del bordo degli elementi grafici che rappresentano i marker
  * @property {number} markerHoverScaleFactor - Fattore di scala degli elementi grafici che rappresentano i marker al passaggio del mouse
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i marker
- * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei marker
+ * @property {Array.<SVGElement>} DOMElements - Array contenente i riferimenti agli elementi SVG dei marker
  */
 
 /**
@@ -69,9 +69,9 @@
  * @property {boolean} showAll - Flag che indica se mostrare tutti i tooltip
  * @property {number} showListScaleStep - Step dopo il quale aggiornare la showList
  * @property {number} showListLastThreshold - Soglia di scala dell'ultimo aggiornamento della showList
- * @property {Array.<Number>} showList - Array contenente gli indici dei pano da mostrare
+ * @property {Array.<number>} showList - Array contenente gli indici dei pano da mostrare
  * @property {SVGGElement} DOMElement - Elemento SVG del gruppo che contiene i tooltip
- * @property {Array} DOMElements - Array contenente i riferimenti agli elementi SVG dei tooltip
+ * @property {Array.<SVGElement>} DOMElements - Array contenente i riferimenti agli elementi SVG dei tooltip
  */
 
 /**
@@ -1043,6 +1043,9 @@ export default class MiniMap {
             this.tooltips.DOMElements[p].classList.toggle("skip");
         }
 
+        // Se showAll è abilitato, aggiorna la visibilità dei tooltip
+        utils.updateTooltipsVisibility(this);
+
         this.saveDataset();
     }
 
@@ -1111,7 +1114,7 @@ export default class MiniMap {
             [this.#currentTourIndex, this.#currentSetIndex, this.#currentPanoIndex] = [t, s, p];
 
             this.resetDOMMapElements();
-console.log("changeMap");
+            
             // aggiorno la mappa
             this.updateMap();
         }
