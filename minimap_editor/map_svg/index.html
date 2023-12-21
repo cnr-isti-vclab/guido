@@ -1,0 +1,58 @@
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="#">
+    <link rel="stylesheet" href="./style.css">
+    <script type="module" src="./main.js"></script>
+    <title>SVG Map</title>
+  </head>
+  <body>
+    <dialog id="minimap_dialog">
+      <div class="minimap_dialog_landing">
+        <p>Si è verificato un errore nel salvataggio delle modifiche apportate.</p>
+        <p>Ciò potrebbe essere dovuto a un problema di connessione o a un errore del server.</p>
+        <ul>
+          <li><b>Riprova</b>: tenta nuovamente il salvataggio.</li>
+          <li><b>Prosegui</b>: continua a modificare.</li>
+        </ul>
+        <div>
+          <button id="minimap_dialog_retry_btn" title="Retry">Riprova</button>
+          <button id="minimap_dialog_continue_btn" title="Continue">Prosegui</button>
+        </div>
+      </div>
+      <div class="minimap_dialog_loading minimap_dialog_hidden">
+        <p>Attendere prego...</p>
+        <svg class="minimap_dialog_loader_svg" viewBox="0 -5.5 37 16.5">
+          <circle cx="5.5" cy="5.5" r="5"></circle>
+          <circle cx="18.5" cy="5.5" r="5"></circle>
+          <circle cx="31.5" cy="5.5" r="5"></circle>
+        </svg>
+      </div>
+    </dialog>
+
+    <div style = "display: flex; flex-direction: column; width: fit-content; gap: 5px; padding: 20px;">
+      <div style = "display: flex; gap: 5px; display: hidden;">
+        <button id="yaw_DX" style="width: 100%;">DX</button>
+        <button id="yaw_SX" style="width: 100%;">SX</button>
+      </div>
+      <button id="skip_pano">SKIP PANO</button>
+      <button id="change_pano">PANO NEW</button>
+      <button id="change_pano_new_set">PANO NEW SET</button>
+      <button id="change_pano_new_tour">PANO NEW TOUR</button>
+    </div>
+    
+
+    <div id="minimap_container">
+      <div id="map_container" class="simple_container map_container hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="map_svg"></svg>
+        <div id="map_controls" class="controls"></div>
+      </div>
+      <div id="map_open" class="simple_container">
+        <button id="btn_map_open" class="map_control_btn map_open_btn" title="Open map editor"></button>
+      </div>
+    </div>
+  </body>
+</html>
