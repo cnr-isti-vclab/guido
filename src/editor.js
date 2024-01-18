@@ -1,5 +1,6 @@
 import { Panorama } from './panorama.js'
 import { getIcon, getIcons, createElement, createSvgElement } from './utils.js'
+import MiniMap from './minimap.js';
 
 class Editor {
 
@@ -22,23 +23,37 @@ class Editor {
 
 		document.querySelector('#tour-initial').style.display = 'none';
 		this.initToolbar();
+
+		this.minimap = new MiniMap();
 	}
 
+	save() {
+		this.minimap.saveDataset();
+	}
+	
 	initToolbar() {
 		this.sections = 'entries';
-		const toolbar = document.querySelector('.tour-toolbar');
-
-		this.tools = {};
-		for(let tool of ['entries', 'users', 'chat', 'options', 'guide', 'raise', 'laser'])
-			document.querySelectorAll('.tour-toolbar .tour-' + tool).forEach( e => e.style.display = 'none');
-
+		document.querySelector('.tour-toolbar').style.display = 'none';
+		document.querySelector('#users_video').style.display = 'none';
 	}
 
 	createEntries(panos) {
+
+		for(let p of panos)
+			p.translation[1] = p.translation[2];
+		this.minimap.init(this.panorama.dataset);
+
 		this.panos = panos;
 		const entries = this.entries = document.querySelector('#tour-entries');
 
+		let set = null;
 		for(let pano of this.panos) {
+			if(set != pano.set) {
+				let li = createElement('li', { class: 'tour-set', 'data-set': pano.set });
+				li.textContent = pano.set.toUpperCase();
+				set = pano.set;
+				this.entries.append(li);
+			}
 			if('priority' in pano)
 				this.entries.append(this.createEntry(pano));
 		}
@@ -53,6 +68,7 @@ class Editor {
 			e.stopPropagation();
 			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
 			//this.panoClicked(e);
+			this.minimap.changeMap(pano.id);
 			this.panorama.setPano(pano.id, true);
 		});
 		return li;
@@ -70,7 +86,7 @@ class Editor {
 			input.setAttribute('checked', 'checked');
 		li.append(input);
 		let span = createElement('span');
-		span.textContent = `${pano.label || pano.id}`;
+		span.textContent = ` ${pano.label || pano.id}`;
 		li.append(span);
 
 		input.addEventListener('change', (e) => {
@@ -80,6 +96,7 @@ class Editor {
 				spot.style.display = pano.skip ? 'none' : 'block';
 			e.stopPropagation();
 			e.preventDefault();
+			this.save();
 		});
 		input.addEventListener('click', (e)  => {
 			e.stopPropagation();
@@ -95,6 +112,7 @@ class Editor {
 					span.innerHTML = `${pano.label || pano.id}`;
 				});
 				e.stopPropagation();
+				this.save();
 			}
 		});
 		if(!('priority' in pano))
@@ -108,9 +126,7 @@ class Editor {
 		priority.addEventListener('click', (e) => {
 			pano.priority = (pano.priority+2)%3;
 			priority.innerHTML = getIcon(priorities[pano.priority]);
-			//if(pano.id != this.viewer.getScene()) {
-				//TODO viewer.addScene('currentSceneId', {new config}); followed by viewer.loadScene('currentSceneId');.
-			//}
+			this.save();
 		});
 	}
 

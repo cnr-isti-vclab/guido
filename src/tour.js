@@ -17,7 +17,11 @@ class Tour {
 		this.socketpath = socketpath;
 		this.connected = false;
 
+		this.pauseStatus = {}; //pause status by action
+
 		this.maxPriority = 0; //only show toplevel entries
+		this.statusResolution = 100; //ms between status changes emit
+		this.lastStatus = { stamp: 0 };
 
 
 		this.panorama = new Panorama(panourl, container);
@@ -100,7 +104,7 @@ class Tour {
 			this.userCount.textContent = '?';
 
 		this.tools = {};
-		for(let tool of ['users', 'chat', 'options', 'guide', 'raise', 'laser'])
+		for(let tool of ['users', 'chat', 'options', 'guide', 'raise', 'laser', 'talk'])
 			this.tools[tool] = toolbar.querySelector('.tour-' + tool);
 
 		this.tools.users.addEventListener('click', (e) => this.showSection('users'));
@@ -128,18 +132,19 @@ class Tour {
 			html += `<li data-user="${user.id}">${user.username}`;
 
 			if(user.locked)
-				html += ` <img class="user-lock" src="${lock}"/>`;
+				html += ` <img class="user-lock${this.guide?' guide':''}" src="${lock}"/>`;
 			else
-				html += ` <img class="user-unlock" src="${unlock}"/>`;
+				html += ` <img class="user-unlock${this.guide?' guide':''}" src="${unlock}"/>`;
 
-			if(user.muted)
-				html += ` <img class="user-mute" src="${muted}"/>`;
-			else
-				html += ` <img class="user-unmute" src="${mic}"/>`;
+			if(user.id != this.streamClient.id) {
+				if(user.muted)
+					html += ` <img class="user-mute" src="${muted}"/>`;
+				else
+					html += ` <img class="user-unmute" src="${mic}"/>`;
 
-			if(user.raised)
-				html += `<img class="user-raise" src="${raised}"/>`;
-
+				if(user.raised)
+					html += `<img class="user-raise" src="${raised}"/>`;
+			}
 
 			count++;
 		}
@@ -208,9 +213,15 @@ class Tour {
 	}
 
 	zoomChange(e) {
+		//let status = this.panorama.getStatus();
+		let status = this.panorama.getView();
+		if(status.fov != 90)
+			this.sendStatus( { action: 'zoom', view: status});
+		this.previousFov = status.fov;
 	}
 
 	viewChange(e) {
+		this.sendStatus({ action: 'viewchange', view: this.panorama.getView() });
 	}
 
 	panoClicked(e) {
@@ -225,13 +236,7 @@ class Tour {
 		if(entry)
 			entry.classList.add('current');
 
-		/*let p = this.container.parentElement.querySelector('.tour-panel');
-		if(p) p.remove();
-		const panel = this.panel = document.createElement('div');
-		panel.classList.add('tour-panel');
-		this.container.parentElement.appendChild(panel);
-
-		this.createToolbar(panel); */
+		this.sendStatus({ action: 'scenechange', view: this.panorama.getView() });
 	}
 
 	createEntries(panos) {
@@ -273,6 +278,25 @@ class Tour {
 		if(section == 'chat') {
 			this.tools.chat.setAttribute('badge', 0);
 		}
+	}
+
+	track() {
+		if(this.pauseStatus)
+			return;
+
+		let status = this.panorama.getStatus();
+		status.action = 'move';
+		this.sendStatus(status);
+	}
+
+	sendStatus(status) {
+		if(this.pauseStatus[status.action])
+			return;
+
+		this.pauseStatus[status.action] = true;
+		setTimeout(()=> { this.pauseStatus[status.action] = false; }, this.statusResolution);
+		
+		this.streamClient.socket.emit('status', status );
 	}
 
 

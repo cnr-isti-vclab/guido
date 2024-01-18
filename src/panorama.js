@@ -41,7 +41,6 @@ class Panorama {
 	}
 
 	load(url) {
-		console.log('loading!');
 		(async () => { 
 			var response = await fetch(url);
 			if(!response.ok) {
@@ -122,9 +121,6 @@ class Panorama {
 				let dist = Math.sqrt(dx*dx + dy*dy);
 				let H = 2.2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
-				if(pano.id == 0) {
-					console.log(dist, pitch);
-				}
 			
 
 				//if(target.priority == 0)
@@ -142,7 +138,6 @@ class Panorama {
 						//TODO clean this mess!
 						if(e.target.closest('.tour-visibility')) return;
 						this.emit('panoclicked');
-						console.log("Setting target: ", target.id, this.panos[target.id]);
 						this.setPano(target.id); 
 
 						e.preventDefault(); 
@@ -179,8 +174,9 @@ class Panorama {
 			for(let tour of json.tours) {
 				for(let set of tour.sets) {
 					for(let pano of set.panos) {
-						pano.url = tour.name + "/" + pano.url;
-						pano.priority = 2;
+						//pano.url = tour.name + "/" + pano.url;
+						//pano.priority = 2;
+						pano.set = set.name;
 					}
 					json.panos = [...json.panos, ...set.panos];
 				}
@@ -227,11 +223,16 @@ class Panorama {
 				pano.horizontalRoll =  0;
 			}
 
+			pano.horizontalPitch = 0;
+
 			//let [z, x, y] = applyMatrix(pano.rotation, pano.translation);
 			let x = pano.translation[0];
 			let y = pano.translation[1];
 			let z = pano.translation[2];
 
+			if(pano.id == 2)
+				pano.initialYaw = -10;
+			console.log(this.baseurl, pano.url);
 			let scene = {
 				yaw: 0,
 				horizonRoll: pano.horizontalRoll,
@@ -267,7 +268,7 @@ class Panorama {
 					//let d = Math.sqrt(Math.pow(x - tx, 2) + Math.pow(y - ty, 2));
 					if(target.priority == 0 && d < 300 ||
 						target.priority == 1 && d < 150 ||
-						d < 50) {
+						d < 100) {
 						links.push(target);
 					}	
 				
@@ -281,7 +282,6 @@ class Panorama {
 
 				
 				let dir = [tx - x, ty - y, tz - z, 1];
-				let yaw = 0;
 				if(pano.rotation.length) {
 					if(correct) { //try to fix also roll and  pitch
 						let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
@@ -292,7 +292,8 @@ class Panorama {
 					}
 				} 
 				
-				
+				/*
+								let yaw = 0;
 				if(pano.rotation.length) {
 					yaw = 180-180*Math.atan2(dir[0], dir[2])/3.1415;
 				} else {
@@ -301,9 +302,17 @@ class Panorama {
 				if(yaw < 0) yaw += 360;
 				if(yaw >= 360) yaw -= 360;
 
-				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 				let H = 2.2 - dir[1];
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
+				*/
+
+				//let yaw = 90 - pano.initialYaw + 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+				let H = 2.2;
+				let pitch = -180*Math.atan2(H, dist)/3.1415; 
+				if(pano.id)
+					yaw -= 15;
 
 				if(target.priority == 0)
 					pitch = 1;
@@ -382,29 +391,30 @@ class Panorama {
 	setStatus(status, timeout = 100) {
 		if(!this.viewer)
 			return;
-		const {room, lat, lon, fov,  highlight, stamp} = status;
-		
-		this.setHighlight(highlight);
-		if(room != this.viewer.getScene())
-			this.setPano(room);
 
-		this.viewer.setYaw(lon, timeout);
-		this.viewer.setPitch(lat, timeout);
-		this.viewer.setHfov(fov, timeout);
+		if(status.view) {
+			const {room, lat, lon, fov} = status.view;
+			if(room != this.viewer.getScene())
+			this.setPano(room);
+			this.camera = { lat, lon, fov, north:0 };
+			this.viewer.setYaw(lon, timeout);
+			this.viewer.setPitch(lat, timeout);
+			this.viewer.setHfov(fov, timeout);
+		}
+		this.setHighlight(status.highlight);
 	}
 
-	getStatus() {
+	getView() {
 		let stamp = new Date().getTime();
 		let lat = this.viewer.getPitch();
 		let lon = this.viewer.getYaw();
 		let fov = this.viewer.getHfov();
 		let room = this.viewer.getScene();
-		let highlight = this.getHighlight();
-		return { room: room, lat, lon, fov,  stamp, highlight };
+		return { room: room, lat, lon, fov,  stamp };
 	}
 
 	setPano(id, useScreenshot) {
-		console.log(useScreenshot);
+
 		let currentId = this.viewer.getScene();
 		if(id == currentId) //this.status.room)
 			return;
@@ -420,14 +430,12 @@ class Panorama {
 		let fov = this.viewer.getHfov();
 
 		if(useScreenshot) {
-			console.log(useScreenshot);
 			this.camera = { lat: pano.pitch || 0, lon: pano.yaw || 0, fov: (pano.hfov || fov), north: 0 };
 		} else {
 			let lat = this.viewer.getPitch();
 			let lon = this.viewer.getYaw();
 			
 			let north = -current.initialYaw + pano.initialYaw;
-			console.log("current yaw", lon, "north: ", north, current.initialYaw, pano.initialYaw);
 			this.camera = { lat, lon, fov, north };
 		}
 

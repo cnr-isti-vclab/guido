@@ -5,7 +5,6 @@ class GuideTour extends Tour {
 	constructor(container, panourl, serverurl, socketpath) {
 		super(container, panourl, serverurl, socketpath);
 
-		this.resolution = 100; //ms between status changes emit
 
 		this.panorama.addEvent('highlight_on',   (coords) => this.highlightOn(coords));
 		this.panorama.addEvent('highlight_move', (coords) => this.highlightMove(coords));
@@ -78,36 +77,37 @@ class GuideTour extends Tour {
 
 		this.guide = true;
 		this.keepLaserAlive = false;
-		this.lastTrack = { stamp: 0 };
 	}
 
 
 	initToolbar() {
 		super.initToolbar();
-		this.tools.options.classList.remove('disabled');
-		this.tools.laser.classList.remove('disabled');
+		//this.tools.options.classList.remove('hidden');
+		this.tools.laser.classList.remove('hidden');
+		this.tools.talk.classList.add('hidden');
 
-		this.tools.guide.classList.add('disabled');
-		this.tools.raise.addEventListener('click', (e) => { this.showSection('users') });
+		this.tools.guide.classList.add('hidden');
+		this.tools.raise.classList.add('hidden');
+		//this.tools.raise.addEventListener('click', (e) => { this.showSection('users') });
 		this.tools.laser.addEventListener('click', (e) => { 
 			this.keepLaserAlive = !this.keepLaserAlive; 
 			this.tools.laser.classList.toggle('laser', this.keepLaserAlive);
 			if(!this.keepLaserAlive) {
 				this.panorama.removeHighlight();
-				this.sendStatus();
+				
 			}
 		});
 	}
 
 	async subscribe(e) {
-		console.log("request to subscribe: ", e);
 		if(!this.connected)
 			return;
 
 		this.stream = await this.streamClient.subscribe(e);
-		console.log("Stream!", this.stream.getTracks(), e);
-		console.log(e.kind);
-		console.assert(e.kind == 'audio', "Unexpected video incoming!");
+		if(!this.stream)
+			return;
+		
+			console.assert(e.kind == 'audio', "Unexpected video incoming!");
 
 		let audio = document.querySelector('#users_video video');
 		audio.srcObject = this.stream;
@@ -120,39 +120,29 @@ class GuideTour extends Tour {
 		this.tools.raise.setAttribute('badge', count);
 		super.updateUsers(users);
 	}
-	zoomChange(e) {
-		this.track();
-	}
-
-	viewChange(e) {
-		this.track();
-	}
 
 	panoClicked(e) {
 		this.panorama.removeHighlight();
 	}
-	
-	sceneChange(id) {
-		super.sceneChange(id);
-		this.track();
-	}
 
 	highlightOn(coords) {
 		this.panorama.moveHighlight(coords);
-		this.sendStatus();
+		this.sendStatus({ action: "highlight_on", highlight: this.panorama.getHighlight() });
+
 	}
 	highlightOff(coords) {
-		if(!this.keepLaserAlive)
+		if(!this.keepLaserAlive) {
 			this.panorama.removeHighlight(coords);
-		this.sendStatus();
+			this.sendStatus({ action: "highlight_off", highlight: false });
+		}
 	}
 	highlightMove(coords) {
 		this.panorama.moveHighlight(coords);
-		this.sendStatus();
+		this.sendStatus({ action: 'highlight_move', highlight: this.panorama.getHighlight() });
 	}
 
 		//the changes are sent to the server
-	track() {
+/*	track() {
 		let resolution = 100; //ms
 		let status = this.panorama.getStatus();
 		
@@ -171,13 +161,13 @@ class GuideTour extends Tour {
 		
 		this.lastTrack = status;
 		this.sendStatus(status);
-	}
+	} 
 
 	sendStatus(status) {
 		if(!status)
 			status = this.panorama.getStatus();
 		this.streamClient.socket.emit('follow', status );
-	}
+	} */
 
 }
 

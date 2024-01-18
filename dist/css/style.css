@@ -41,6 +41,10 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 	cursor: pointer; 
 	opacity:0.5;
 }
+.tour-toolbar svg.disabled {
+	opacity:0.3;
+}
+
 .tour-toolbar .tour-users svg {
 	width:42px:
 }
@@ -49,7 +53,7 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 .tour-toolbar .active svg { opacity: 1.0; }
 .tour-toolbar .tour-raise.raised svg { stroke:red; opacity: 1.0; }
 .tour-toolbar .tour-laser.laser svg { stroke:red; opacity: 1.0; }
-.tour-toolbar .disabled { display:none; }
+.tour-toolbar .hidden { display:none; }
 
 [badge]:after {
 	background: red;
@@ -106,7 +110,8 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 	display:none;
 } */
 
-.tour-section li { cursor: pointer; padding:5px 0px; padding-left:16px; }
+.tour-section li { padding:5px 0px; padding-left:16px; }
+.tour-section li .user-lock.guide, .tour-section li .user-unlock.guide { cursor:pointer; }
 .tour-section li:hover, .tour-userlist li:hover { background-color:#888; color:#fff; }
 .tour-section li.current { font-weight:bold; }
 

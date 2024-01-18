@@ -3,29 +3,39 @@
   "version": "1.0.0",
   "description": "Interactive guided tour using 360 panoramas in Pisa.",
   "main": "build/guido.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode development",
     "start": "webpack-dev-server --hot",
-    "rollup": "rollup -c rollup.config.js"
+    "rollup": "rollup -c rollup.config.js",
+    "nodemon": "nodemon --watch ./src --exec npm run rollup"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "html-webpack-plugin": "^4.5.0",
-    "rollup": "^2.52.3",
-    "rollup-plugin-terser": "^7.0.2",
-    "socket.io": "^4.3.1",
-    "socket.io-client": "^4.3.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.0"
+    "async-mutex": "^0.4.0",
+    "express": "^4.16.4",
+    "ffmpeg-static": "^5.2.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mediasoup": "^3.11.6",
+    "mediasoup-client": "3",
+    "rollup": "^3.10.1",
+    "socket.io": "^4.5.4",
+    "socket.io-client": "^4.5.4",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
   },
   "files": [
-    "build/guide2pi.js",
+    "build/guido.js",
     "LICENSE",
     "package.json",
     "README.md",
     "src"
-  ]
+  ],
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.3.0",
+    "nodemon": "^2.0.20"
+  }
 }

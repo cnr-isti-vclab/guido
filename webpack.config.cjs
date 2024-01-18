@@ -1,5 +1,10 @@
 var webpack = require('webpack')
+var fs = require('fs')
+//import webpack from 'webpack'
+
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+//import HtmlWebpackPlugin from 'html-webpack-plugin'
+//import path from 'path'
 const path = require('path')
 
 module.exports = {
@@ -7,15 +12,22 @@ module.exports = {
   entry: {
     main: './src/index.js',
   },
-
+    cache:false,
   output: {
     path: path.resolve(__dirname + '/dist'),
     filename: 'main.js',
   },
 
+  mode: 'development',
+  
   devServer: {
-    contentBase: './dist',
-	port:9000
+    static: './dist',
+    port:9000,
+    https: {
+      key: fs.readFileSync("server/private.key"),
+      cert: fs.readFileSync("server/private.pem"),
+      ca: fs.readFileSync("server/private.pem")
+    }
   },
 
   optimization: {

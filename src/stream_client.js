@@ -29,9 +29,13 @@ class StreamClient {
 	}
 	
 	init() {
-
+		//we cannot share screen
+		if(typeof navigator.mediaDevices == 'undefined') {
+			console.log("Security problem: mediaDevices is undefined");
+		}
 		if (typeof navigator.mediaDevices.getDisplayMedia === 'undefined') {
-			//we cannot share screen
+			
+			console.log("Security problem: getDisplayMedia is undefined");
 		}
 
 		let socket = this.socket = socketClient(this.url, { path: this.path, transports: ['websocket'] });
@@ -322,6 +326,10 @@ class StreamClient {
 		const { rtpCapabilities } = this.device;
 		//if(event.kind == 'audio') {
 			const data = await this.socket.request('consume', { kind: event.kind, rtpCapabilities, client: event.id });
+			if(data.error) {
+				console.error("Consume error: ", data.error);
+				return null;	
+			}
 			const {
 				producerId,
 				id,

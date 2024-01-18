@@ -12,8 +12,14 @@ class TouristTour extends Tour {
 		this.followTimeout = false; //timeout when changing view to refollow.
 		this.locked = true;
 		this.muted = true;
-		
-		this.streamClient.addEvent('follow', status => 	{ this.status = status; this.follow(); });
+		this.status = {};
+		this.streamClient.addEvent('follow', status => 	{
+			if(status.view)
+				this.status.view = status.view;
+			if(status.highlight !== null)
+				this.status.highlight = status.highlight;
+			this.follow(); 
+		});
 
 		this.streamClient.addEvent('connected', () => {
 			//console.log("SHARING AUDIO");
@@ -79,12 +85,13 @@ class TouristTour extends Tour {
 	}
 
 	async subscribe(e) {
-		console.log("request to subscribe: ", e);
+		
 		if(!this.connected)
 			return;
 
 		this.stream = await this.streamClient.subscribe(e);
-		console.log("Stream!", this.stream.getTracks(), e);
+		if(!this.stream)
+			return;
 		let video = document.querySelector('#users_video video');
 		video.srcObject = this.stream;
 		
@@ -92,17 +99,17 @@ class TouristTour extends Tour {
 	}
 
 	wheelEvent(e) {
+		super.wheelEvent(e);
 		this.lookaround();
-	}
-	zoomChange(e) {
 	}
 
 	viewChange(e) {
+		super.viewChange(e);
 		this.lookaround();
 	}
 
 	panoClicked(e) {
-		console.log('panoclicked');
+		
 		this.following = false;
 		this.looking = false;
 		clearTimeout(this.followTimeout);
