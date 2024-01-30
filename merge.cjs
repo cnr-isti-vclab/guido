@@ -6,11 +6,13 @@ const fs = require('fs');
 function splitLine(line) {
 	return line.split(' ').map(e => parseFloat(e));
 }
-function parseOut(out, list, skip) {
+function parseOut(out, list) {
 	const imgs = fs.readFileSync(list).toString().replace(/\r\n/g,'\n').split('\n');
 
 	let text = fs.readFileSync(out);
 	const array = text.toString().replace(/\r\n/g,'\n').split('\n');
+
+
 	array.shift(); //remove initial comment, TODO might be more than one.
 	let n = parseInt(array.shift().split(' ')[0]);
 	let panos = [];
@@ -22,7 +24,8 @@ function parseOut(out, list, skip) {
 		pano.id = count;
 		pano.url = imgs[i];
 
-		array.shift(); //focal, and k1 k2
+		array.shift(); //skip focal, k1, k2
+
 		let rotation = [
 			...splitLine(array.shift()), 0,
 			...splitLine(array.shift()), 0,
@@ -38,79 +41,82 @@ function parseOut(out, list, skip) {
 		
 		let R = deviationMatrix(rotation);
 		let euler = eulerFromMatrix(R, 'YXZ'); //y is up (yaw), x is pitch, z is roll			
-		let G = matMul(pano.rotation, T);
-		dir = applyMatrix(G, dir);
+//		let G = matMul(pano.rotation, T);
+//		dir = applyMatrix(G, dir);
 		
 		pano.initialYaw      = euler[1]; 
 		pano.horizontalPitch = -euler[0];
-		pano.horizontalRoll  = -euler[2]
+		pano.horizontalRoll  = -euler[2];
+
+		console.log(euler);
+
+
 
         //swap y and z
-		pano.translation = [-v[0], -v[2], -v[1]]; //view position				
+		pano.translation = [-v[0], -v[1], -v[2]]; //view position				
 
-		if(skip && i >= skip[0] && i < skip[1])
-			continue;
-			
-			
-		panos.push(pano);
 		count++;
+
+		if(t[0] == 0)
+			continue;
+
+
+		panos.push(pano);
+
 	}
 	
 	return panos;
 }
 
 
-
-let datasets = [
-	{
-		filename: "piazza",
-		yaw: 0
-	}, 
-/*	{
-		filename: "mura",
-		yaw: 0
-	},   */
-
-	{
-		filename: "abside",
-		yaw: 0
-	}, 
-/*	{
-		filename: "cavalieri",
-		yaw: 0
-	}, */
-
-	{
-		filename: "chiesa",
-		yaw: 0
-	}, 
-	{
-		filename: "haring",
-		yaw: 0
-	} 
-];
-
-
-let dataset = { panos: [], accessPoints: [] };
+if(process.argv.length < 2) {
+	console.log(process.argv)
+	print("Usage: python script.py <folder_path>")
+	process.exit();
+}
+process.argv.shift();
+process.argv.shift();
 
 let current_id = 0;
-for(let data of datasets) {
-	let skip = null;
-	if(data.filename == 'piazza')
-		skip = [40, 97];
-	let panos = parseOut(`${data.filename}/${data.filename}.out`, `${data.filename}/list.txt`, skip);
+let dataset = { tours: [], 	accessPoints: [0] };
+let tour = { name: 'Lucca',
+	sets: [],
+}
+dataset.tours.push(tour);
 
-	let initial = panos[0].rotation; 
+let count =0 ;
+for(let folder_path of process.argv) {
+	let set = {
+		name: folder_path.split('/').slice(-1)[0],
+		order: count++,
+		panos: []
+	};
+	tour.sets.push(set)
+
+	set.panos = parseOut(`${folder_path}/tour.out`, `${folder_path}/list.txt`);
+
+	let initial = set.panos[0].rotation; 
 	let adjust = transpose(deviationMatrix(initial));
 
 	let euler = eulerFromMatrix(matMul(initial, adjust), 'YXZ'); //y is up (yaw), x is pitch, z is roll
 		console.log('yaw', euler[1], 'pitch', euler[0], 'roll', euler[2]);
 
-	for(let pano of panos) {
+	let boundingbox = {
+		"easting_min": 1e30,
+		"easting_max": -1e30,
+		"northing_min": 1e30,
+		"northing_max": -1e30
+	};
+	for(let pano of set.panos) {
 		pano.id = `${current_id++}`;
-		pano.url = `${data.filename}/${pano.url}`;
-		pano.label = `${data.filename} ${pano.id}`;
-		pano.set = data.filename;
+		pano.url = `${set.name}/${pano.url}`;
+		pano.label = `${folder_path} ${pano.id}`;
+		pano.set = folder_path;
+		pano.priority = 0;
+		boundingbox.easting_min = Math.min(boundingbox.easting_min, pano.translation[0]);
+		boundingbox.easting_max = Math.max(boundingbox.easting_max, pano.translation[0]);
+		boundingbox.northing_min = Math.min(boundingbox.northing_min, pano.translation[1]);
+		boundingbox.northing_max = Math.max(boundingbox.northing_max, pano.translation[1]);
 		//pano.rotation = matMul(pano.rotation, adjust);
 		//pano.translation = applyMatrix(adjust, pano.translation);
 
@@ -124,11 +130,10 @@ for(let data of datasets) {
 	
 
 	}
+	set.boundingbox = boundingbox;
 
-	dataset.panos = [...dataset.panos, ...panos];
+	//set.panos = [...dataset.panos, ...panos];
 }
-
-dataset.accessPoints = dataset.panos[0].id;
 
 fs.writeFileSync('test.json', JSON.stringify(dataset,null, 2));
 
