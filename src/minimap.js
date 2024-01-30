@@ -151,8 +151,8 @@ export default class MiniMap {
                 DOMElement: null,
             },
             markers: {
-                markerRadius: 8,
-                markerStrokeWidth: 3,
+                markerRadius: 1,
+                markerStrokeWidth: 0.1,
                 markerHoverScaleFactor: 1.5,
                 DOMElement: null,
                 DOMElements: []

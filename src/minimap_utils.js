@@ -25,7 +25,7 @@ let pinFillColorModified = "#9c27b0";
 let pinStrokeColorModified = "#6a1b9a";
 
 let svgStyleString = `
-    .pin {}
+    .pin { stroke-width: 0.2px; }
 
     .current {
         fill: ${pinFillColorCurrent};
