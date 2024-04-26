@@ -109,11 +109,14 @@ class TouristTour extends Tour {
 	}
 
 	panoClicked(e) {
+		if(this.following)
+			this.streamClient.sendMsg('unfollow', this.status);
 		
 		this.following = false;
 		this.looking = false;
 		clearTimeout(this.followTimeout);
 		document.querySelector('.tour-guide').classList.toggle('follow', false);
+
 	}
 
 	lookaround() {
@@ -124,7 +127,6 @@ class TouristTour extends Tour {
 		document.querySelector('.tour-guide').classList.toggle('follow', false);
 		clearTimeout(this.followTimeout);
 		this.followTimeout = setTimeout(() => { this.looking = false; this.follow(); }, this.lookingIdle);
-
 	}
 
 	follow() {
@@ -147,7 +149,8 @@ class TouristTour extends Tour {
 			this.following = !this.following;
 			this.looking = false;
 			document.querySelector('.tour-guide').classList.toggle('follow', this.following);
-
+			this.streamClient.sendMsg(this.following? 'following' : 'unfollow', this.status);
+			
 			if(this.following)
 				this.follow();		
 		});

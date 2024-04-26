@@ -248,6 +248,16 @@ async function runSocketServer() {
 			}
 			saveStatus(client, status);
 		});
+		
+		socket.on('following', (status) => {
+			let client = clients[socket.id];
+			saveStatus(client, { action: 'following' });
+		});
+		
+		socket.on('unfollow', (status) => {
+			let client = clients[socket.id];
+			saveStatus(client, { action: 'unfollow' });
+		});
 
 		socket.on('connect_error', (err) => {
 			console.error('client connection error', err);

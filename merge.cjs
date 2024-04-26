@@ -1,13 +1,144 @@
 //Merge some js
 
+var ExifImage = require('exif').ExifImage;
+
 const fs = require('fs');
 
+const project = require('./UTMprojection.cjs')
 
 function splitLine(line) {
 	return line.split(' ').map(e => parseFloat(e));
 }
-function parseOut(out, list) {
+
+async function getExif(path) {
+	return new Promise((resolve, reject) => {
+		 new ExifImage({ image : path }, function (error, exifData) {
+			if (error)
+				reject();
+			else
+				resolve(exifData);
+		});
+	});
+}
+
+function dms_to_dd(dms, dms_ref) {
+
+	let m = dms[1]/60.0;
+	let s = dms[2]/3600.0;
+	let dd = dms[0] + m + s;
+
+	if(dms_ref == 'S' || dms_ref == 'W')
+		dd = -dd;
+	return dd;
+}
+
+
+const numeric = require('numeric');
+
+function computeAffineTransformation(points, transformedPoints) {
+    const A = [];
+    const B = [];
+
+    // Construct the design matrix and vector
+    for (let i = 0; i < 3; i++) {
+        const x = points[i][0];
+        const y = points[i][1];
+        const u = transformedPoints[i][0];
+        const v = transformedPoints[i][1];
+
+        A.push([x, y, 1, 0, 0, 0]);
+        A.push([0, 0, 0, x, y, 1]);
+
+        B.push(u);
+        B.push(v);
+    }
+
+    // Solve the linear system using least squares
+    const x = numeric.solve(A, B);
+
+    // Extract the transformation parameters
+    const a = x.slice(0, 3);
+    const b = x.slice(3);
+
+    return { a, b };
+}
+
+function applyAffineTransformation(point, transformation) {
+    const x = point[0];
+    const y = point[1];
+
+    const u = transformation.a[0] * x + transformation.a[1] * y + transformation.a[2];
+    const v = transformation.b[0] * x + transformation.b[1] * y + transformation.b[2];
+
+    return [u, v];
+}
+
+function triangleArea(p1, p2, p3) {
+    return 0.5 * Math.abs(p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1]));
+}
+
+// Function to compute the average of affine transformations weighted by triangle areas
+function averageAffineTransforms(points, transformedPoints, numSamples) {
+    const numPoints = points.length;
+    let totalTransformA = [0, 0, 0];
+    let totalTransformB = [0, 0, 0];
+
+	let totalArea = 0;
+    for (let i = 0; i < numSamples; i++) {
+        // Randomly select three points
+        const indices = [];
+        while (indices.length < 3) {
+            const index = Math.floor(Math.random() * numPoints);
+            if (!indices.includes(index)) {
+                indices.push(index);
+            }
+        }
+        const triplePoints = indices.map(index => points[index]);
+        const tripleTransformedPoints = indices.map(index => transformedPoints[index]);
+
+        // Compute the affine transformation for the triple
+        const transformation = computeAffineTransformation(triplePoints, tripleTransformedPoints);
+
+
+
+        // Compute the area of the triangle formed by the three points
+        const area = triangleArea(triplePoints[0], triplePoints[1], triplePoints[2]);
+
+        // Accumulate the weighted transformation
+        totalTransformA = totalTransformA.map((val, idx) => val + transformation.a[idx] * area);
+        totalTransformB = totalTransformB.map((val, idx) => val + transformation.b[idx] * area);
+		totalArea += area;
+    }
+
+    // Normalize by the total area
+    
+    const avgTransformA = totalTransformA.map(val => val / totalArea);
+    const avgTransformB = totalTransformB.map(val => val / totalArea);
+
+//	let test = applyAffineTransformation(points[0], { a: avgTransformA, b: avgTransformB });
+//	console.log(test, points[0], transformedPoints[0]);
+
+
+    return { a: avgTransformA, b: avgTransformB };
+}
+
+
+
+async function parseOut(out, list, path) {
 	const imgs = fs.readFileSync(list).toString().replace(/\r\n/g,'\n').split('\n');
+	if(imgs[imgs.length-1] == '')
+		imgs.pop();
+
+	let exifs = [];
+	for(let img of imgs) {
+		try {
+			let e = await getExif(path + '/' + img);
+			exifs.push(e);
+		} catch(e) {
+			console.log("problem with exifs " + img);
+		}
+
+	}
 
 	let text = fs.readFileSync(out);
 	const array = text.toString().replace(/\r\n/g,'\n').split('\n');
@@ -23,6 +154,10 @@ function parseOut(out, list) {
 
 		pano.id = count;
 		pano.url = imgs[i];
+		let exif = exifs[i];
+		pano.latitude = dms_to_dd(exif.gps.GPSLatitude, exif.gps.GPSLatitudeRef);
+		pano.longitude = dms_to_dd(exif.gps.GPSLongitude, exif.gps.GPSLongitudeRef);
+		pano.altitude = exif.gps.GPSAltitude;
 
 		array.shift(); //skip focal, k1, k2
 
@@ -48,9 +183,10 @@ function parseOut(out, list) {
 		pano.horizontalPitch = -euler[0];
 		pano.horizontalRoll  = -euler[2];
 
-		console.log(euler);
 
 
+		if(euler[0] == 0 && euler[1] == 0)
+			continue;
 
         //swap y and z
 		pano.translation = [-v[0], -v[1], -v[2]]; //view position				
@@ -64,42 +200,95 @@ function parseOut(out, list) {
 		panos.push(pano);
 
 	}
+
+	let local = [];
+	let global = [];
+	for(let pano of panos) {
+		local.push([pano.translation[0], pano.translation[1]]);
+		global.push([pano.latitude, pano.longitude]);
+	}
+	const transform = averageAffineTransforms(local, global, local.length);
+
+	
+	let local_first = [panos[0].translation[0], panos[0].translation[1]];
+	let global_first = [panos[0].latitude, panos[0].longitude];
+	for(let pano of panos) {
+		let global_point = [pano.latitude, pano.longitude];
+		let local_point = [pano.translation[0], pano.translation[1]];
+
+		let new_global_point =  applyAffineTransformation(local_point, transform);
+		
+//		pano.latitude = new_global_point[0];
+//		pano.longitude = new_global_point[1];
+		pano.utm = project(pano.latitude, pano.longitude, 10)
+	}
+
 	
 	return panos;
 }
 
 
-if(process.argv.length < 2) {
+
+if(process.argv.length < 3) {
 	console.log(process.argv)
-	print("Usage: python script.py <folder_path>")
+	console.log("Usage: node merge.cjs <folder_path1> <folder_path2> ...etc.")
 	process.exit();
 }
 process.argv.shift();
 process.argv.shift();
 
+generate();
+
+async function generate() {
+
 let current_id = 0;
 let dataset = { tours: [], 	accessPoints: [0] };
-let tour = { name: 'Lucca',
+let tour = { name: 'Tour name',
 	sets: [],
 }
 dataset.tours.push(tour);
 
 let count =0 ;
 for(let folder_path of process.argv) {
+	console.log("Processing: " + folder_path);
+	if(folder_path.slice(-1) == '/') {
+		folder_path = folder_path.slice(0, -1);
+	}
 	let set = {
 		name: folder_path.split('/').slice(-1)[0],
 		order: count++,
 		panos: []
 	};
 	tour.sets.push(set)
+	
+	let dir = fs.readdirSync( folder_path );
+	let files = dir.filter( ( e ) => e.match(/.*\.(out?)/ig));
+	if(files.length == 0) {
+		console.log("Missing .out file!");
+		exit(0);
+	}
+	if(files.length > 1) {
+		console.log("Too many .out files!");
+		exit(0);
+	}
 
-	set.panos = parseOut(`${folder_path}/tour.out`, `${folder_path}/list.txt`);
+	//find *.out
+	set.panos = await parseOut(`${folder_path}/${files[0]}`, `${folder_path}/list.txt`, folder_path);
+
 
 	let initial = set.panos[0].rotation; 
 	let adjust = transpose(deviationMatrix(initial));
 
 	let euler = eulerFromMatrix(matMul(initial, adjust), 'YXZ'); //y is up (yaw), x is pitch, z is roll
-		console.log('yaw', euler[1], 'pitch', euler[0], 'roll', euler[2]);
+
+	let latlon_box = {
+		"latitude_min": 1e30,
+		"latitude_max": -1e30,
+		"longitude_min": 1e30,
+		"longitude_max": -1e30,
+		"altitude_min": 1e30,
+		"altitude_max": -1e30,
+	};
 
 	let boundingbox = {
 		"easting_min": 1e30,
@@ -107,36 +296,50 @@ for(let folder_path of process.argv) {
 		"northing_min": 1e30,
 		"northing_max": -1e30
 	};
+	
+	let utm_box = {
+		"easting_min": 1e30,
+		"easting_max": -1e30,
+		"northing_min": 1e30,
+		"northing_max": -1e30
+	};
+
+
 	for(let pano of set.panos) {
-		pano.id = `${current_id++}`;
+		pano.id = current_id++;
 		pano.url = `${set.name}/${pano.url}`;
-		pano.label = `${folder_path} ${pano.id}`;
-		pano.set = folder_path;
-		pano.priority = 0;
+		pano.label = `${set.name} ${pano.id}`;
+		pano.set = set.name;
+		pano.priority = 2;
 		boundingbox.easting_min = Math.min(boundingbox.easting_min, pano.translation[0]);
 		boundingbox.easting_max = Math.max(boundingbox.easting_max, pano.translation[0]);
 		boundingbox.northing_min = Math.min(boundingbox.northing_min, pano.translation[1]);
 		boundingbox.northing_max = Math.max(boundingbox.northing_max, pano.translation[1]);
-		//pano.rotation = matMul(pano.rotation, adjust);
-		//pano.translation = applyMatrix(adjust, pano.translation);
 
-		
+		utm_box.easting_min = Math.min(utm_box.easting_min, pano.utm[0]);
+		utm_box.easting_max = Math.max(utm_box.easting_max, pano.utm[0]);
+		utm_box.northing_min = Math.min(utm_box.northing_min, pano.utm[1]);
+		utm_box.northing_max = Math.max(utm_box.northing_max, pano.utm[1]);
 
-//		let R = deviationMatrix(pano.rotation);
-
-//		console.log(pano.label);
-//		for(let order of ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'])
-//			console.log(order, eulerFromMatrix(R, order)); 
-	
-
+		latlon_box.latitude_min = Math.min(latlon_box.latitude_min, pano.latitude);
+		latlon_box.latitude_max = Math.max(latlon_box.latitude_max, pano.latitude);
+		latlon_box.longitude_min = Math.min(latlon_box.longitude_min, pano.longitude);
+		latlon_box.longitude_max = Math.max(latlon_box.longitude_max, pano.longitude);
+		latlon_box.altitude_min = Math.min(latlon_box.altitude_min, pano.altitude);
+		latlon_box.altitude_max = Math.max(latlon_box.altitude_max, pano.altitude);
+	}
+	for(let pano of set.panos) {
+		pano.translation_utm = [pano.utm[0] - utm_box.easting_min, pano.utm[1] - utm_box.northing_min];
 	}
 	set.boundingbox = boundingbox;
-
-	//set.panos = [...dataset.panos, ...panos];
+	set.boundingbox_utm = utm_box;
+	set.boundingbox_latlon = latlon_box;
 }
 
+console.log("Saving tour to test.json");
 fs.writeFileSync('test.json', JSON.stringify(dataset,null, 2));
 
+}
 
 
 function clamp(v, min, max) {

@@ -205,14 +205,14 @@ class Panorama {
 		}
 		config.firtstScene = this.accessPoints[0];
 		for(let pano of this.panos) {
-			pano.initialYaw = 0;
+			/*pano.initialYaw = 0;
 			if(pano.rotation.length) {
 				let r = pano.rotation;
 
 				let R = deviationMatrix(r);
 				let euler = eulerFromMatrix(R, 'YXZ'); //y is up (yaw), x is pitch, z is roll
 				pano.initialYaw      = euler[1]; 
-			}
+			}*/
 			
 
 			if(correct) {
@@ -230,11 +230,8 @@ class Panorama {
 			let y = pano.translation[1];
 			let z = pano.translation[2];
 
-			if(pano.id == 2)
-				pano.initialYaw = -10;
-			console.log(this.baseurl, pano.url);
 			let scene = {
-				yaw: 0,
+				yaw: pano.yaw || 0,
 				horizonRoll: pano.horizontalRoll,
 				horizonPitch: -pano.horizontalPitch,
 				multiRes: {
@@ -291,28 +288,19 @@ class Panorama {
 						dir = applyMatrix(pano.rotation, dir);
 					}
 				} 
-				
-				/*
-								let yaw = 0;
-				if(pano.rotation.length) {
-					yaw = 180-180*Math.atan2(dir[0], dir[2])/3.1415;
-				} else {
-					yaw = 180*Math.atan2(dir[2], dir[0])/3.1415 - pano.initialYaw;
-				}
-				if(yaw < 0) yaw += 360;
-				if(yaw >= 360) yaw -= 360;
-
-				let H = 2.2 - dir[1];
-				let pitch = -180*Math.atan2(H, dist)/3.1415; 
-				*/
-
-				//let yaw = 90 - pano.initialYaw + 180*Math.atan2(dir[2], dir[0])/3.1415;
+				/* working with positions from gps 
 				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
+				*/
+				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let yaw = 90 + angle;
+				if(pano.id == 3 && [5, 8].includes(target.id))
+					console.log({yaw, angle});
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+
+				//if(pano.id == 3)
+				//	console.log({yaw, dist, dir});
 				let H = 2.2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
-				if(pano.id)
-					yaw -= 15;
 
 				if(target.priority == 0)
 					pitch = 1;

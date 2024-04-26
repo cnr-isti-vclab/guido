@@ -16,7 +16,7 @@ class Editor {
 		//this.panorama.addEvent('wheelevent',  (e) => this.wheelEvent(e));
 
 		//this.panorama.addEvent('viewchange',   (e) => this.viewChange(e));
-		//this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
+		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
 		//this.panorama.addEvent('panoclicked', (id) => this.panoClicked(id));
 
 		this.panorama.editor = true;
@@ -25,22 +25,44 @@ class Editor {
 		this.initToolbar();
 
 		this.minimap = new MiniMap();
+
+		document.addEventListener('keydown', (event) => {
+			if (event.keyCode != 32) return;
+
+			let id = this.panorama.viewer.getScene();			
+			let pano = this.panos.find(e => e.id == id);
+			if(!pano) return;
+
+			pano.yaw = this.panorama.viewer.getYaw();
+			pano.pitch = this.panorama.viewer.getPitch();
+			pano.fov = this.panorama.viewer.getHfov();
+			this.save();
+		});
+		
+		// Define your f
 	}
 
 	save() {
 		this.minimap.saveDataset();
 	}
-	
+
 	initToolbar() {
 		this.sections = 'entries';
 		document.querySelector('.tour-toolbar').style.display = 'none';
 		document.querySelector('#users_video').style.display = 'none';
 	}
 
+	sceneChange(id) {
+		this.entries.querySelectorAll('[data-pano]').forEach(p => p.classList.remove('current'));
+		let entry = this.entries.querySelector(`[data-pano="${id}"]`);
+		if(entry)
+			entry.classList.add('current');
+	}
+
 	createEntries(panos) {
 
-		for(let p of panos)
-			p.translation[1] = p.translation[2];
+		//for(let p of panos)
+		//	p.translation[1] = p.translation[2];
 		this.minimap.init(this.panorama.dataset);
 
 		this.panos = panos;
@@ -49,10 +71,14 @@ class Editor {
 		let set = null;
 		for(let pano of this.panos) {
 			if(set != pano.set) {
-				let li = createElement('li', { class: 'tour-set', 'data-set': pano.set });
+				let li = createElement('li', { class: 'tour-set' });
 				li.textContent = pano.set.toUpperCase();
 				set = pano.set;
 				this.entries.append(li);
+				li.addEventListener('click', (e) => { 
+					document.querySelectorAll(`[data-set="${pano.set}"]`).forEach(e => e.classList.toggle('hidden')); 
+					li.classList.toggle('closed');
+				});
 			}
 			if('priority' in pano)
 				this.entries.append(this.createEntry(pano));
@@ -60,7 +86,7 @@ class Editor {
 	}
 
 	createEntry(pano) {
-		let li = createElement('li', { 'data-pano': pano.id })
+		let li = createElement('li', { 'data-pano': pano.id, 'data-set': pano.set })
 		
 		this.createEntryElement(pano, li);
 		
@@ -112,7 +138,7 @@ class Editor {
 					span.innerHTML = `${pano.label || pano.id}`;
 				});
 				e.stopPropagation();
-				this.save();
+			this.save();
 			}
 		});
 		if(!('priority' in pano))

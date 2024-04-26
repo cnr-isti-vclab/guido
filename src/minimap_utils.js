@@ -89,7 +89,7 @@ let svgStyleString = `
 
     .tooltip>text {
         fill: cornsilk;
-        font-size: 10pt;
+        font-size: 2pt;
         font-family: sans-serif;
         font-weight: bold;
         text-anchor: middle;

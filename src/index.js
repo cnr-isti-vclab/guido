@@ -7,11 +7,21 @@ import { Editor } from './editor.js'
 //let host = 'https://192.168.1.107:8080'
 //let host = 'https://146.48.84.182:8080';
 let host = 'https://vcg.isti.cnr.it:8080';
-let saveUrl = '/save/datasets/lucca/lucca/dataset.json'
+
 let parameter = Object.fromEntries(new URLSearchParams(location.search));
 
-let dataset = 'miracoli/panos/dataset.json';
-dataset = 'lucca/dataset.json';
+let saveUrl;
+let dataset;
+
+let lucca = false;
+if(lucca) {
+	dataset = 'lucca/dataset.json'; //register.it
+	saveUrl = '/save/datasets/lucca/lucca/dataset.json'
+} else {
+	dataset = 'miracoli/panos/dataset.json';
+	saveUrl = '/save/datasets/miracoli/miracoli/dataset.json'
+}
+
 switch(parameter.role) {
 	case 'editor': 
 		let editor = new Editor('#panorama', dataset); 
