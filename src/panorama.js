@@ -260,12 +260,19 @@ class Panorama {
 					}
 					let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 
-					//let tx = target.translation[0];
-					//let ty = target.translation[1];
-					//let d = Math.sqrt(Math.pow(x - tx, 2) + Math.pow(y - ty, 2));
-					if(target.priority == 0 && d < 300 ||
-						target.priority == 1 && d < 150 ||
-						d < 100) {
+					//this is for lucca
+					let short_range = 100;
+					let mid_range = 150;
+					let long_range = 300;
+
+					//this is dor pisa:
+					short_range = 50;
+					mid_range = 100;
+					long_range = 200;
+
+					if(target.priority == 0 && d < long_range ||
+						target.priority == 1 && d < mid_range ||
+						d < short_range) {
 						links.push(target);
 					}	
 				
@@ -293,8 +300,6 @@ class Panorama {
 				*/
 				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
 				let yaw = 90 + angle;
-				if(pano.id == 3 && [5, 8].includes(target.id))
-					console.log({yaw, angle});
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 
 				//if(pano.id == 3)

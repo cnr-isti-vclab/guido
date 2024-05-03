@@ -19,7 +19,7 @@ if(lucca) {
 	saveUrl = '/save/datasets/lucca/lucca/dataset.json'
 } else {
 	dataset = 'miracoli/panos/dataset.json';
-	saveUrl = '/save/datasets/miracoli/miracoli/dataset.json'
+	saveUrl = '/save/datasets/miracoli/miracoli/panos/dataset.json'
 }
 
 switch(parameter.role) {

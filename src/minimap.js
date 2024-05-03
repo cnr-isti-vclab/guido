@@ -364,6 +364,9 @@ export default class MiniMap {
             // get dataset
             this.#dataset = dataset;
         
+            if(!dataset.tours)
+                return;
+        
             // Create controls bar data object
             const controlsBar = controlsBarData(utils, this);
         
@@ -999,8 +1002,11 @@ export default class MiniMap {
             this.changesUnsaved = true;
         } else { */
             console.log("Saving log: avvio salvataggio modifiche");
+            if(this.#dataset.tours) {
             let dataset = { 'tours': this.dataset.tours, 'accessPoints': this.dataset.accessPoints };
             utils.sendData(dataset, this.saveURL);
+            } else
+                utils.sendData(this.#dataset, this.saveURL);
     
 /*            this.saveTimeoutRunning = true;
     
@@ -1105,7 +1111,8 @@ export default class MiniMap {
      * @param {number} [scopeLevel] - Livello di scope (0: panos, 1: sets, 2: tours)
      */
     changeMap (panoID, scopeLevel = 2) {
-
+        if(!this.#dataset.tours)
+            return;
         const [t, s, p] = this.findIndices(panoID, scopeLevel);
 
         if (t === this.#currentTourIndex && s === this.#currentSetIndex) {
