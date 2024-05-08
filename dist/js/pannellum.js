@@ -42,6 +42,7 @@ var config,
     preview,
     draggingHotSpot,
     isUserInteracting = false,
+    isSceneChanging = false,
     latestInteraction = Date.now(),
     onPointerDownPointerX = 0,
     onPointerDownPointerY = 0,
@@ -1677,7 +1678,8 @@ function render() {
         
         renderer.render(config.pitch * Math.PI / 180, config.yaw * Math.PI / 180, config.hfov * Math.PI / 180, {roll: config.roll * Math.PI / 180});
         
-        renderHotSpots();
+        if(isSceneChanging == false)
+	     	  renderHotSpots();
         
         // Update compass
         if (config.compass) {
@@ -2037,7 +2039,8 @@ function createHotSpots() {
         config.hotSpots.forEach(createHotSpot);
     }
     hotspotsCreated = true;
-    renderHotSpots();
+ 	 if(isSceneChanging == false)
+   	 renderHotSpots();
 }
 
 /**
@@ -2719,6 +2722,10 @@ this.isUserInteracting = function() {
     return Boolean(isUserInteracting);
 }
 
+this.isSceneChanging = function() {
+    return Boolean(isSceneChanging);
+}
+
 /**
  * Returns the pitch of the center of the view.
  * @memberof Viewer
@@ -3079,6 +3086,16 @@ this.stopMovement = function() {
     stopAnimation();
     speed = {'yaw': 0, 'pitch': 0, 'hfov': 0};
 };
+
+/**
+ * set scenechanging state
+ * @private
+ */
+this.setSceneChanging = function(v){
+	isSceneChanging = v; 
+	if(v==false)
+		render();
+}
 
 /**
  * Returns the panorama renderer.

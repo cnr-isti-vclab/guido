@@ -260,19 +260,12 @@ class Panorama {
 					}
 					let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 
-					//this is for lucca
-					let short_range = 100;
-					let mid_range = 150;
-					let long_range = 300;
-
-					//this is dor pisa:
-					short_range = 50;
-					mid_range = 100;
-					long_range = 200;
-
-					if(target.priority == 0 && d < long_range ||
-						target.priority == 1 && d < mid_range ||
-						d < short_range) {
+					//let tx = target.translation[0];
+					//let ty = target.translation[1];
+					//let d = Math.sqrt(Math.pow(x - tx, 2) + Math.pow(y - ty, 2));
+					if(target.priority == 0 && d < 300 ||
+						target.priority == 1 && d < 150 ||
+						d < 100) {
 						links.push(target);
 					}	
 				
@@ -344,6 +337,11 @@ class Panorama {
 		viewer.on('scenechange', (id) => {
 			this.sceneChange(id); 
 			this.emit('scenechange', id);
+		});
+
+		viewer.on('scenechangefadedone', (id) => {
+			this.sceneChangeFadeDone(id); 
+			this.emit('scenechangefadedone', id);
 		});
 
 		await this.setPano(this.panos[0].id);
@@ -435,6 +433,10 @@ class Panorama {
 		this.viewer.loadScene(id);
 	}
 
+	sceneChangeFadeDone(id) {
+		this.viewer.setSceneChanging(false);
+		this.viewer.render();
+	}
 	//adjust camera parameters when changing!
 	sceneChange(id) {
 		let lon, lat, fov;
@@ -651,7 +653,8 @@ addSignals(Panorama,
 	'highlight_off',
 	'highlight_move',
 	'scenechange', //afer pano is changed
-	'panoclicked' //before pano is changed, when the user click
+	'panoclicked', //before pano is changed, when the user click
+	'scenechangefadedone' //afer pano is changed
 	);
 
 export { Panorama }
