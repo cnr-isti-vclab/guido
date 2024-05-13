@@ -29,7 +29,36 @@
 			cursor:auto !important;
 			opacity:0.2;
 		}
+		
+	#overlayImageContainer {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        #overlayImage {
+            max-width: 100%;
+            max-height: 80vh;
+            display: block;
+            margin: 0 auto;
+        }
+        .closeButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #fff;
+            cursor: pointer;
+        }}
+
 	</style>
+	
+	
 </head>
 <body>
 	
@@ -37,6 +66,8 @@
 		Name: <input type="text" name="name" id="username"><br/>
 		<input type="button" id="enter" value="Enter"/>
 	</div> -->
+
+    
 	<div id="panorama">
 
 		<div class="tour-panel show">
@@ -200,6 +231,11 @@
 		</div>
 	  </div>
 
+	<div id="overlayImageContainer">
+        <img id="overlayImage" src="" alt="Overlay Image">
+        <span class="closeButton" onclick="closeOverlayImage()">Close</span>
+    	</div>
+    	
 	<!--<script>
 		// window.localStorage.setItem('debug', 'mediasoup-client:WARN* mediasoup-client:ERROR*');
 		window.localStorage.setItem('debug', 'mediasoup-client:*');
@@ -210,5 +246,21 @@
 	<!--<script type="module" src="js/minimap_main.js"></script> -->
 	<script type="text/javascript" src="main.js"></script>
 
+
+    	
+<input type="file" id="fileInput" name="file" onchange="uploadFile(event)">
+    <?php
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
+        $targetDir = './';
+        $targetFile = $targetDir . basename($_FILES['file']['name']);
+
+        if (move_uploaded_file($_FILES['file']['tmp_name'], $targetFile)) {
+            echo 'File uploaded successfully.';
+        } else {
+            echo 'Failed to upload file.';
+        }
+    }
+    ?>
+    
 </body>
 </html>

@@ -91,7 +91,7 @@
  * @property {Object.<string, boolean>} #panosVisibility=null - Associa l'ID di ogni pano del set corrente a un flag che indica se è visibile o meno dal pano corrente
  * @property {number} #editorMode=0 - Modalità di editor
  * @property {Object} #modeTypes - Oggetto contenente le modalità di editor
- * @property {string} #saveURL - URL del server di salvataggio
+ * @property {string} #URL - URL del server di salvataggio
  * @property {number} #saveTimeout=5000 - Timeout di salvataggio
  * @property {boolean} #changesUnsaved=false - Flag che indica se ci sono modifiche non salvate
  * @property {boolean} #saveTimeoutRunning=false - Flag che indica se è in corso il timeout di salvataggio

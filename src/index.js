@@ -2,11 +2,12 @@
 import { GuideTour } from './guidetour.js'
 import { TouristTour } from './touristtour.js'
 import { Editor } from './editor.js'
+import {html_server_ip} from '../config.js' 
 
 //let host = 'https://localhost:8080';
 //let host = 'https://192.168.1.107:8080'
 //let host = 'https://146.48.84.182:8080';
-let host = 'https://vcg.isti.cnr.it:8080';
+let host = html_server_ip;
 
 let parameter = Object.fromEntries(new URLSearchParams(location.search));
 

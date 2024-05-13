@@ -2039,7 +2039,7 @@ function createHotSpots() {
         config.hotSpots.forEach(createHotSpot);
     }
     hotspotsCreated = true;
- 	 if(isSceneChanging == false)
+    if(isSceneChanging == false)
    	 renderHotSpots();
 }
 
