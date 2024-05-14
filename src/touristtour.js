@@ -18,6 +18,7 @@ class TouristTour extends Tour {
 				this.status.view = status.view;
 			if(status.highlight !== null)
 				this.status.highlight = status.highlight;
+			this.status.imgurl = status.imgurl;
 			this.follow(); 
 		});
 

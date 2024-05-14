@@ -19,12 +19,7 @@ function closeOverlayImage() {
 }
 
 // Attach event listener to close button
-document.addEventListener('DOMContentLoaded', function() {
-    var closeButton = document.querySelector('.closeButton');
-    if (closeButton) {
-        closeButton.addEventListener('click', closeOverlayImage);
-    }
-});
+
         
 class Panorama {
 	constructor(panourl, container) {
@@ -35,6 +30,7 @@ class Panorama {
 		this.container = container;
 		this.mousePosition = { x: 0, y: 0};
 		this.highspot = null; //highlight spot.
+ 		this.imgurl = null;
 
 		this.status = {  //set by guide, read by followers
 			room: -1,
@@ -45,7 +41,8 @@ class Panorama {
 			paths: {},
 			highlight: null,
 			stamp : new Date(),
-			count: '?'
+			count: '?',
+ 			imgurl:null
 		}
 
 		this.camera = { //used when swithing from one view to the next
@@ -245,14 +242,17 @@ class Panorama {
 				//yaw: -yaw - (pano.initialYaw -90),
 				yaw: 0.0,
 				type: "info",
-				sceneId: pano, // TOFIX
+				sceneId: pano.id, // maybe
+				clickHandlerArgs : './prova.png',
 				text:"latorre",
 				createTooltipFunc: null,
-				clickHandlerFunc: (e) => { 
-				// Display overlay image
-				showOverlayImage('./prova.png');
-				e.preventDefault(); 
-				e.stopPropagation(); 
+				clickHandlerFunc: (e,imgurl) => { 
+					// Display overlay image
+					showOverlayImage(imgurl);
+					this.imgurl = imgurl;
+					this.emit('infoshown');
+					e.preventDefault(); 
+					e.stopPropagation(); 
 			},
 			});
 				
@@ -276,6 +276,13 @@ class Panorama {
 			this.sceneChangeFadeDone(id); 
 			this.emit('scenechangefadedone', id);
 		});
+
+		var closeButton = document.querySelector('.closeButton');
+		closeButton.addEventListener('click', () => { 
+			closeOverlayImage();
+			this.imgurl = null;
+			this.emit('infohide') 
+		} );
 
 		await this.setPano(this.panos[0].id);
 		//scenechange event not sent on the first load. (WHY?!);
@@ -327,6 +334,11 @@ class Panorama {
 			this.viewer.setHfov(fov, timeout);
 		}
 		this.setHighlight(status.highlight);
+ 		if(status.imgurl)
+ 			showOverlayImage(status.imgurl);// to fix
+ 				else
+ 			closeOverlayImage(status.imgurl);// to fix
+ 			
 	}
 
 	getView() {
@@ -337,7 +349,11 @@ class Panorama {
 		let room = this.viewer.getScene();
 		return { room: room, lat, lon, fov,  stamp };
 	}
-
+	
+	getImgUrl(){
+		return this.imgurl;
+	}
+ 
 	setPano(id, useScreenshot) {
 
 		let currentId = this.viewer.getScene();
@@ -591,7 +607,9 @@ addSignals(Panorama,
 	'highlight_off',
 	'highlight_move',
 	'scenechange', //afer pano is changed
-	'panoclicked' //before pano is changed, when the user click
+	'panoclicked', //before pano is changed, when the user click
+	'infoshown',
+	'infohide'
 	);
 
 export { Panorama }
