@@ -87,6 +87,7 @@ class Panorama {
 			}
 		}
 		this.panos = json.panos;
+		this.photos = json.photos;
 		//just make sure they exists.
 		for(let p of this.panos) {
 			p.skipLinks = p.skipLinks || [];
@@ -181,6 +182,25 @@ class Panorama {
 					}	
 				
 			}
+			
+			let infospots = [];
+			for(let target of this.photos) {
+				 if(target.set != pano.set )
+					continue;
+					
+				let tx = target.translation[0];
+				let ty = target.translation[1];
+				let tz = target.translation[2];
+				let dir = [tx - x, ty - y, tz - z, 1];
+				let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+
+				let  range = 20;
+
+				if(d < range) 
+				infospots.push(target);
+				
+			}
+			
 			let hotSpots = [];
 
 			for(let target of links) {
@@ -204,12 +224,7 @@ class Panorama {
 				*/
 				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
 				let yaw = 90 + angle;
-				if(pano.id == 3 && [5, 8].includes(target.id))
-					console.log({yaw, angle});
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-				//if(pano.id == 3)
-				//	console.log({yaw, dist, dir});
 				let H = 2.2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
 
@@ -237,25 +252,80 @@ class Panorama {
 					},
 				})
 			}
-			hotSpots.push({
-				pitch: 0.0,
-				//yaw: -yaw - (pano.initialYaw -90),
-				yaw: 0.0,
-				type: "info",
-				sceneId: pano.id, // maybe
-				clickHandlerArgs : './prova.png',
-				text:"latorre",
-				createTooltipFunc: null,
-				clickHandlerFunc: (e,imgurl) => { 
-					// Display overlay image
-					showOverlayImage(imgurl);
-					this.imgurl = imgurl;
-					this.emit('infoshown');
-					e.preventDefault(); 
-					e.stopPropagation(); 
-			},
-			});
+		
+			 for(let target of infospots) {
+
+
+				let tx = target.translation[0];
+				let ty = target.translation[1];
+				let tz = target.translation[2];
+
 				
+				let dir = [tx - x, ty - y, tz - z, 1];
+				if(pano.rotation.length) {
+					if(correct) { //try to fix also roll and  pitch
+						let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
+						let G = matMul(pano.rotation, T);
+						dir = applyMatrix(G, dir);
+					} else {
+						dir = applyMatrix(pano.rotation, dir);
+					}
+				} 
+				/* working with positions from gps 
+				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
+				*/
+				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let yaw = 90 + angle;
+				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+
+				//if(pano.id == 3)
+				//	console.log({yaw, dist, dir});
+				let H = dir[1];
+				let pitch = 180*Math.atan2(H, dist)/3.1415; 
+
+
+				hotSpots.push({
+					pitch: pitch,
+					//yaw: -yaw - (pano.initialYaw -90),
+					yaw: yaw,
+					type: "info",
+					sceneId: pano.id, // maybe
+					clickHandlerArgs : target.url,
+					text:target.tooltip,
+					createTooltipFunc: null,
+					clickHandlerFunc: (e,imgurl) => { 
+						// Display overlay image
+						showOverlayImage(imgurl);
+						this.imgurl = imgurl;
+						this.emit('infoshown');
+						e.preventDefault(); 
+						e.stopPropagation(); 
+					},
+				})
+			}
+	
+/*			if(pano.photos)
+			for(let photo of pano.photos){
+				hotSpots.push({
+					pitch: 0.0,
+					//yaw: -yaw - (pano.initialYaw -90),
+					yaw: 0.0,
+					type: "info",
+					sceneId: pano.id, // maybe
+					clickHandlerArgs : photo.url,
+					text:"latorre",
+					createTooltipFunc: null,
+					clickHandlerFunc: (e,imgurl) => { 
+						// Display overlay image
+						showOverlayImage(imgurl);
+						this.imgurl = imgurl;
+						this.emit('infoshown');
+						e.preventDefault(); 
+						e.stopPropagation(); 
+					},
+				});
+			} 
+	*/			
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
 			config.basePath = './';
