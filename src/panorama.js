@@ -150,40 +150,9 @@ class Panorama {
 					cubeResolution: 2136
 				},
 			};
-			let links = [];
-			for(let target of this.panos) {
-				if(target == pano || target.skip || target.set != pano.set ||
-					(pano.skipLinks.includes(target.id) && !this.editor))
-					continue;
 
-					let tx = target.translation[0];
-					let ty = target.translation[1];
-					let tz = target.translation[2];
-					let dir = [tx - x, ty - y, tz - z, 1];
-					if(pano.rotation.length) {
-						dir = applyMatrix(pano.rotation, dir);
-					}
-					let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-					//this is for lucca
-					let short_range = 100;
-					let mid_range = 150;
-					let long_range = 300;
-
-					//this is dor pisa:
-					short_range = 50;
-					mid_range = 100;
-					long_range = 200;
-
-					if(target.priority == 0 && d < long_range ||
-						target.priority == 1 && d < mid_range ||
-						d < short_range) {
-						links.push(target);
-					}	
-				
-			}
-			
 			let infospots = [];
+			if( this.photos)
 			for(let target of this.photos) {
 				 if(target.set != pano.set )
 					continue;
@@ -203,7 +172,9 @@ class Panorama {
 			
 			let hotSpots = [];
 
-			for(let target of links) {
+			if(pano.links)
+			for(let ti of pano.links) {
+				let target = this.panos[ti];
 				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
@@ -252,7 +223,8 @@ class Panorama {
 					},
 				})
 			}
-		
+	
+			 if(infospots) 		
 			 for(let target of infospots) {
 
 
@@ -303,29 +275,7 @@ class Panorama {
 					},
 				})
 			}
-	
-/*			if(pano.photos)
-			for(let photo of pano.photos){
-				hotSpots.push({
-					pitch: 0.0,
-					//yaw: -yaw - (pano.initialYaw -90),
-					yaw: 0.0,
-					type: "info",
-					sceneId: pano.id, // maybe
-					clickHandlerArgs : photo.url,
-					text:"latorre",
-					createTooltipFunc: null,
-					clickHandlerFunc: (e,imgurl) => { 
-						// Display overlay image
-						showOverlayImage(imgurl);
-						this.imgurl = imgurl;
-						this.emit('infoshown');
-						e.preventDefault(); 
-						e.stopPropagation(); 
-					},
-				});
-			} 
-	*/			
+				
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
 			config.basePath = './';
