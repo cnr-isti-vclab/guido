@@ -5,6 +5,8 @@ const config = {
   //sslKey: 'ssl-cert-snakeoil.key',
   sslCrt: 'private.pem',
   sslKey: 'private.key',
+  //sslCrt: 'fullchain.pem',
+  //sslKey: 'privkey.pem',
   mediasoup: {
     // Worker settings
     worker: {

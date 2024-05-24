@@ -73,28 +73,24 @@ class Panorama {
 
 	async init(json) {
 		this.dataset = json;
-		if(json.tours) {
-			json.panos = [];
-			for(let tour of json.tours) {
-				for(let set of tour.sets) {
-					for(let pano of set.panos) {
-						//pano.url = tour.name + "/" + pano.url;
-						//pano.priority = 2;
-						pano.set = set.name;
-					}
-					json.panos = [...json.panos, ...set.panos];
-				}
+		json.panos = [];
+		for(let set of json.sets) {
+			for(let pano of set.panos) {
+				//pano.url = tour.name + "/" + pano.url;
+				//pano.priority = 2;
+				pano.set = set.name;
 			}
+			json.panos = [...json.panos, ...set.panos];
 		}
 		this.panos = json.panos;
 		this.photos = json.photos;
+		this.accessPoints = json.accessPoints;
 		//just make sure they exists.
 		for(let p of this.panos) {
 			p.skipLinks = p.skipLinks || [];
 			if(p.translation.length == 2)
 				p.translation = [p.translation[0], 0, p.translation[1]];
 		}
-		this.accessPoints = json.accessPoints;
 
 		//this.createInterface();
 		let config = {
@@ -154,8 +150,8 @@ class Panorama {
 			let infospots = [];
 			if( this.photos)
 			for(let target of this.photos) {
-				 if(target.set != pano.set )
-					continue;
+//				 if(target.set != pano.set )
+//					continue;
 					
 				let tx = target.translation[0];
 				let ty = target.translation[1];

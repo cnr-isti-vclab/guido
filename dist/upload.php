@@ -2,15 +2,16 @@
 <?php
 
 // Define the file path where data will be saved
-$filePath = '/home/ganovell/Documents/devel/guido/dist/miracoli/panos/dataset.json';
+$filePath = '/home/ganovell/Documents/devel/guido/dist/datasets/lucca/lucca/dataset.json';
+
 
 // Check if POST data exists
 $postData = file_get_contents('php://input');
+
 if (empty($postData)) {
     http_response_code(400); // Bad Request
     exit('{"error": "No data received"}');
 }
-
 
 
 // Get the current date and time formatted as a string
@@ -24,6 +25,8 @@ $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION); // 'json'
 // Construct the new filename with current date and time
 $newFilename =$dirname.'/'.$filenameWithoutExtension . '_' . $currentDateTime . '.' . $fileExtension;
 
+error_log($newFilename	);
+
 rename($filePath,$newFilename);
 
 
@@ -35,6 +38,7 @@ if ($jsonData === null) {
     exit('{"error": "Invalid JSON data"}');
 }
 
+
 // Encode JSON data to pretty-printed format
 $encodedData = json_encode($jsonData, JSON_PRETTY_PRINT);
 
@@ -44,6 +48,7 @@ if (file_put_contents($filePath, $encodedData) === false) {
     exit('{"error": "Failed to save data"}');
 }
 chmod($filePath,0666);
+error_log("ANDATA");
 
 // Respond with success message
 //http_response_code(200); // OK
