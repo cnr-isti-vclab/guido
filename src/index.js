@@ -1,20 +1,32 @@
-
 import { GuideTour } from './guidetour.js'
 import { TouristTour } from './touristtour.js'
 import { Editor } from './editor.js'
 
-//let host = 'https://localhost:8080';
-//let host = 'https://192.168.1.107:8080'
-//let host = 'https://146.48.84.182:8080';
-//let host = html_server_ip;
+let host = window.guido_host;
 
-let parameter = Object.fromEntries(new URLSearchParams(location.search));
+let dataset = window.guido_dataset;
+let saveuRL = window.guido_saveUrl;
+let key = window.guido_key;
+let role = window.guido_role;
 
+/* uncomment for local deploy 
+
+let host = 'https://vcg.isti.cnr.it:8080';
+let parameter = Object.fromEntries(new URLSearchParams(location.search)); 
+let role = parameter.role;
 let saveUrl;
-let dataset = parameter.dataset + "/dataset.json";
-let host = parameter.host;
+let dataset;
 
-switch(parameter.role) {
+let lucca = false;
+if(lucca) {
+	dataset = 'lucca/dataset.json'; //register.it
+	saveUrl = '/save/datasets/lucca/lucca/dataset.json'
+} else {
+	dataset = 'miracoli/panos/dataset.json';
+	saveUrl = '/save/datasets/miracoli/miracoli/panos/dataset.json'
+}*/
+
+switch(role) {
 	case 'editor': 
 		let editor = new Editor('#panorama', dataset); 
 		editor.minimap.saveURL = saveUrl;
@@ -27,5 +39,3 @@ switch(parameter.role) {
 		const tour1 = new TouristTour('#panorama', dataset, host, '/server');
 		break;
 }
-
-

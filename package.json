@@ -14,23 +14,24 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async-mutex": "^0.4.0",
+    "@types/node": "^20.12.12",
+    "async-mutex": "^0.5.0",
     "exif": "^0.6.0",
-    "express": "^4.16.4",
+    "express": "^4.19.2",
     "ffmpeg-static": "^5.2.0",
-    "html-webpack-plugin": "^5.5.0",
-    "mathjs": "^12.3.2",
-    "mediasoup": "^3.11.6",
+    "html-webpack-plugin": "^5.6.0",
+    "mathjs": "^12.4.2",
+    "mediasoup": "^3.14.7",
     "mediasoup-client": "3",
     "ml-matrix": "^6.11.0",
     "node-exif": "^1.0.1",
     "numeric": "^1.2.6",
-    "rollup": "^3.10.1",
-    "socket.io": "^4.5.4",
-    "socket.io-client": "^4.5.4",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.11.1"
+    "rollup": "^4.18.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
   },
   "files": [
     "build/guido.js",
@@ -40,7 +41,9 @@
     "src"
   ],
   "devDependencies": {
-    "@rollup/plugin-terser": "^0.3.0",
-    "nodemon": "^2.0.20"
+    "@rollup/plugin-multi-entry": "^6.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "nodemon": "^3.1.0"
   }
 }

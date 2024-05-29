@@ -263,8 +263,8 @@ class Panorama {
 					createTooltipFunc: null,
 					clickHandlerFunc: (e,imgurl) => { 
 						// Display overlay image
-						showOverlayImage(imgurl);
-						this.imgurl = imgurl;
+						this.imgurl = this.baseurl+imgurl;
+						showOverlayImage(this.imgurl);
 						this.emit('infoshown');
 						e.preventDefault(); 
 						e.stopPropagation(); 
@@ -274,7 +274,7 @@ class Panorama {
 				
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
-			config.basePath = './';
+		//	config.basePath = './';
 		}
 		config.default.firstScene = "0";
 		let viewer = this.viewer = window.pannellum.viewer(this.container.id, config);
