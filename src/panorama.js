@@ -78,7 +78,7 @@ class Panorama {
 			for(let pano of set.panos) {
 				//pano.url = tour.name + "/" + pano.url;
 				//pano.priority = 2;
-				pano.set = set.name;
+				pano.set = set.set;
 			}
 			json.panos = [...json.panos, ...set.panos];
 		}
