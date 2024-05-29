@@ -5,7 +5,7 @@ import { Editor } from './editor.js'
 let host = window.guido_host;
 
 let dataset = window.guido_dataset;
-let saveuRL = window.guido_saveUrl;
+let saveUrl = window.guido_saveUrl;
 let key = window.guido_key;
 let role = window.guido_role;
 
