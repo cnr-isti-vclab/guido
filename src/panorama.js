@@ -6,6 +6,21 @@ import { addSignals } from './signals.js'
 
 let correct = false; //don't remember what this did.
 
+// Function to show overlay image
+function showOverlayImage(imageSrc) {
+    var overlayImage = document.getElementById('overlayImage');
+    overlayImage.src = imageSrc;
+    document.getElementById('overlayImageContainer').style.display = 'block';
+}
+
+function closeOverlayImage() {
+    var overlayImageContainer = document.getElementById('overlayImageContainer');
+    overlayImageContainer.style.display = 'none';
+}
+
+// Attach event listener to close button
+
+        
 class Panorama {
 	constructor(panourl, container) {
 
@@ -15,6 +30,7 @@ class Panorama {
 		this.container = container;
 		this.mousePosition = { x: 0, y: 0};
 		this.highspot = null; //highlight spot.
+ 		this.imgurl = null;
 
 		this.status = {  //set by guide, read by followers
 			room: -1,
@@ -25,7 +41,8 @@ class Panorama {
 			paths: {},
 			highlight: null,
 			stamp : new Date(),
-			count: '?'
+			count: '?',
+ 			imgurl:null
 		}
 
 		this.camera = { //used when swithing from one view to the next
@@ -53,143 +70,27 @@ class Panorama {
 		})();
 	}
 
-	async initNew(json) {
-		this.dataset = json;
-		this.panos = json.panos;
-		//just make sure they exists.
-		for(let p of this.panos) {
-			p.skipLinks ??= [];
-		}
-		this.accessPoints = json.accessPoints;
-
-		//this.createInterface();
-		let config = {
-			hfov: 90.0,
-			autoLoad: true,
-			capturedKeyNumbers: [],
-			showControls: false,
-			default: {
-				"sceneFadeDuration": 1000,
-				type: "multires",
-			},
-			scenes: {},
-		}
-		config.firtstScene = this.accessPoints[0];
-		for(let pano of this.panos) {
-			let x = pano.translation[0];
-			let y = pano.translation[1];
-
-			let scene = {
-				yaw: 0,
-				horizonRoll: 0,
-				horizonPitch: 0,
-				multiRes: {
-					//"shtHash": "5a~q%MWVWVtRt7WBt7WCWBWAofRjWBj[ofWBWBWBj[a}ofj]ofa|fQWBayWVWVWVj[ayaya|fk",
-					basePath: this.baseurl + pano.url.substr(0, pano.url.length -4),
-					path: "/%l/%s%y_%x",
-					fallbackPath: "/fallback/%s",
-					extension: "jpg",
-					tileResolution: 512,
-					maxLevel: 4,
-					cubeResolution: 2136
-				},
-			};
-			let links = [];
-			for(let target of this.panos) {
-				if(target == pano || target.skip || target.set != pano.set ||
-					(pano.skipLinks.includes(target.id) && !this.editor))
-					continue;
-
-					let dx = target.translation[0] - x;
-					let dy = target.translation[1] - y;
-					let d = Math.sqrt(dx*dx + dy*dy);
-
-					if(target.priority == 0 && d < 300 ||
-						target.priority == 1 && d < 150 ||
-						d < 50) {
-						links.push(target);
-					}	
-				
-			}
-			let hotSpots = [];
-
-			for(let target of links) {
-				let dx = target.translation[0] - x;
-				let dy = target.translation[1] - y;
-
-				let yaw = 90 - pano.initialYaw + 180*Math.atan2(dy, dx)/3.1415;
-				let dist = Math.sqrt(dx*dx + dy*dy);
-				let H = 2.2;
-				let pitch = -180*Math.atan2(H, dist)/3.1415; 
-			
-
-				//if(target.priority == 0)
-				//	pitch = 1;
-
-				hotSpots.push({
-					pitch: pitch,
-					//yaw: -yaw - (pano.initialYaw -90),
-					yaw: yaw,
-					type: "scene",
-					sceneId: target.id,
-					createTooltipFunc: (div, args) => { this.createHotspot(div, pano, target, dist); },
-					createTooltipArgs: [1, 2],
-					clickHandlerFunc: (e) => { 
-						//TODO clean this mess!
-						if(e.target.closest('.tour-visibility')) return;
-						this.emit('panoclicked');
-						this.setPano(target.id); 
-
-						e.preventDefault(); 
-						e.stopPropagation(); 
-
-					},
-				})
-			}
-			scene.hotSpots = hotSpots;
-			config.scenes[pano.id] = scene;
-		}
-		config.default.firstScene = "0";
-		let viewer = this.viewer = window.pannellum.viewer(this.container.id, config);
-		viewer.on('zoomchange', (e) => { this.emit('zoomchange', e); });
-		viewer.on('wheelevent', (e) => this.emit('wheelevent', e));
-		viewer.on('mousemove',  (e) => this.mouseMove(e));
-		viewer.on('keydown', (e) => this.keyDown(e));
-		viewer.on('keyup', (e) => this.keyUp(e));
-		viewer.on('scenechange', (id) => {
-			this.sceneChange(id); 
-			this.emit('scenechange', id);
-		});
-
-		await this.setPano(this.panos[0].id);
-		//scenechange event not sent on the first load. (WHY?!);
-		setTimeout(() => { this.sceneChange(this.panos[0].id); }, 100);
-		this.emit('loaded');
-	}
 
 	async init(json) {
 		this.dataset = json;
-		if(json.tours) {
-			json.panos = [];
-			for(let tour of json.tours) {
-				for(let set of tour.sets) {
-					for(let pano of set.panos) {
-						//pano.url = tour.name + "/" + pano.url;
-						//pano.priority = 2;
-						pano.set = set.name;
-					}
-					json.panos = [...json.panos, ...set.panos];
-				}
+		json.panos = [];
+		for(let set of json.sets) {
+			for(let pano of set.panos) {
+				//pano.url = tour.name + "/" + pano.url;
+				//pano.priority = 2;
+				pano.set = set.name;
 			}
+			json.panos = [...json.panos, ...set.panos];
 		}
 		this.panos = json.panos;
+		this.photos = json.photos;
+		this.accessPoints = json.accessPoints;
 		//just make sure they exists.
 		for(let p of this.panos) {
 			p.skipLinks = p.skipLinks || [];
 			if(p.translation.length == 2)
 				p.translation = [p.translation[0], 0, p.translation[1]];
 		}
-		this.accessPoints = json.accessPoints;
 
 		//this.createInterface();
 		let config = {
@@ -245,34 +146,31 @@ class Panorama {
 					cubeResolution: 2136
 				},
 			};
-			let links = [];
-			for(let target of this.panos) {
-				if(target == pano || target.skip || target.set != pano.set ||
-					(pano.skipLinks.includes(target.id) && !this.editor))
-					continue;
 
-					let tx = target.translation[0];
-					let ty = target.translation[1];
-					let tz = target.translation[2];
-					let dir = [tx - x, ty - y, tz - z, 1];
-					if(pano.rotation.length) {
-						dir = applyMatrix(pano.rotation, dir);
-					}
-					let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+			let infospots = [];
+			if( this.photos)
+			for(let target of this.photos) {
+//				 if(target.set != pano.set )
+//					continue;
+					
+				let tx = target.translation[0];
+				let ty = target.translation[1];
+				let tz = target.translation[2];
+				let dir = [tx - x, ty - y, tz - z, 1];
+				let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 
-					//let tx = target.translation[0];
-					//let ty = target.translation[1];
-					//let d = Math.sqrt(Math.pow(x - tx, 2) + Math.pow(y - ty, 2));
-					if(target.priority == 0 && d < 300 ||
-						target.priority == 1 && d < 150 ||
-						d < 100) {
-						links.push(target);
-					}	
+				let  range = 20;
+
+				if(d < range) 
+				infospots.push(target);
 				
 			}
+			
 			let hotSpots = [];
 
-			for(let target of links) {
+			if(pano.links)
+			for(let ti of pano.links) {
+				let target = this.panos[ti];
 				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
@@ -294,9 +192,6 @@ class Panorama {
 				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
 				let yaw = 90 + angle;
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-				//if(pano.id == 3)
-				//	console.log({yaw, dist, dir});
 				let H = 2.2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
 
@@ -324,8 +219,62 @@ class Panorama {
 					},
 				})
 			}
+	
+			 if(infospots) 		
+			 for(let target of infospots) {
+
+
+				let tx = target.translation[0];
+				let ty = target.translation[1];
+				let tz = target.translation[2];
+
+				
+				let dir = [tx - x, ty - y, tz - z, 1];
+				if(pano.rotation.length) {
+					if(correct) { //try to fix also roll and  pitch
+						let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
+						let G = matMul(pano.rotation, T);
+						dir = applyMatrix(G, dir);
+					} else {
+						dir = applyMatrix(pano.rotation, dir);
+					}
+				} 
+				/* working with positions from gps 
+				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
+				*/
+				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let yaw = 90 + angle;
+				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+
+				//if(pano.id == 3)
+				//	console.log({yaw, dist, dir});
+				let H = dir[1];
+				let pitch = 180*Math.atan2(H, dist)/3.1415; 
+
+
+				hotSpots.push({
+					pitch: pitch,
+					//yaw: -yaw - (pano.initialYaw -90),
+					yaw: yaw,
+					type: "info",
+					sceneId: pano.id, // maybe
+					clickHandlerArgs : target.url,
+					text:target.tooltip,
+					createTooltipFunc: null,
+					clickHandlerFunc: (e,imgurl) => { 
+						// Display overlay image
+						this.imgurl = this.baseurl+imgurl;
+						showOverlayImage(this.imgurl);
+						this.emit('infoshown');
+						e.preventDefault(); 
+						e.stopPropagation(); 
+					},
+				})
+			}
+				
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
+		//	config.basePath = './';
 		}
 		config.default.firstScene = "0";
 		let viewer = this.viewer = window.pannellum.viewer(this.container.id, config);
@@ -344,9 +293,17 @@ class Panorama {
 			this.emit('scenechangefadedone', id);
 		});
 
+		var closeButton = document.querySelector('.closeButton');
+		closeButton.addEventListener('click', () => { 
+			closeOverlayImage();
+			this.imgurl = null;
+			this.emit('infohide') 
+		} );
+
 		await this.setPano(this.panos[0].id);
 		//scenechange event not sent on the first load. (WHY?!);
 		setTimeout(() => { this.sceneChange(this.panos[0].id); }, 100);
+		setTimeout(() => { this.sceneChangeFadeDone(this.panos[0].id); }, 100);
 		this.emit('loaded');
 	}
 
@@ -393,6 +350,11 @@ class Panorama {
 			this.viewer.setHfov(fov, timeout);
 		}
 		this.setHighlight(status.highlight);
+ 		if(status.imgurl)
+ 			showOverlayImage(status.imgurl);// to fix
+ 				else
+ 			closeOverlayImage(status.imgurl);// to fix
+ 			
 	}
 
 	getView() {
@@ -403,7 +365,11 @@ class Panorama {
 		let room = this.viewer.getScene();
 		return { room: room, lat, lon, fov,  stamp };
 	}
-
+	
+	getImgUrl(){
+		return this.imgurl;
+	}
+ 
 	setPano(id, useScreenshot) {
 
 		let currentId = this.viewer.getScene();
@@ -435,11 +401,12 @@ class Panorama {
 
 	sceneChangeFadeDone(id) {
 		this.viewer.setSceneChanging(false);
-		this.viewer.render();
-	}
+ 	}
 	//adjust camera parameters when changing!
 	sceneChange(id) {
 		let lon, lat, fov;
+		this.viewer.setSceneChanging(true);
+		
 		//the code resets yaw pitch and hfov, restore them.
 		lon = this.camera.lon + this.camera.north;
 		lat = this.camera.lat;
@@ -477,6 +444,7 @@ class Panorama {
 			yaw,
 			scale: true,
 			type: "info",
+			zIndex: "10000",
 			createTooltipFunc: (hotSpotDiv) => { 
 				let spot = createSvgElement('svg', { viewport: '0 0 50 50' });
 				spot.classList.add('tour-highlight');
@@ -485,6 +453,7 @@ class Panorama {
 				spot.append(path);
 
 				hotSpotDiv.style.backgroundImage = 'none';
+				hotSpotDiv.style.zIndex = "10000";
 				hotSpotDiv.append(spot);
 			}
 		}
@@ -562,6 +531,7 @@ class Panorama {
 
 	}
 
+
 	mouseEventToPosition(event) {
 		let bounds = this.container.getBoundingClientRect();
 		let pos = {};
@@ -609,7 +579,7 @@ class Panorama {
 		let roll = this.viewer.getHorizonRoll();
 		let hsPitchSin = Math.sin(p * Math.PI / 180),
         	hsPitchCos = Math.cos(p * Math.PI / 180),
-        	configPitchSin = Math.sin(pitch * Math.PI / 180),
+        	PitchSin = Math.sin(pitch * Math.PI / 180),
         	configPitchCos = Math.cos(pitch * Math.PI / 180),
         	yawCos = Math.cos((-y + yaw) * Math.PI / 180);
 		var z = hsPitchSin * configPitchSin + hsPitchCos * yawCos * configPitchCos;
@@ -654,7 +624,8 @@ addSignals(Panorama,
 	'highlight_move',
 	'scenechange', //afer pano is changed
 	'panoclicked', //before pano is changed, when the user click
-	'scenechangefadedone' //afer pano is changed
+	'infoshown',
+	'infohide'
 	);
 
 export { Panorama }

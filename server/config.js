@@ -5,6 +5,8 @@ const config = {
   //sslKey: 'ssl-cert-snakeoil.key',
   sslCrt: 'private.pem',
   sslKey: 'private.key',
+  //sslCrt: 'fullchain.pem',
+  //sslKey: 'privkey.pem',
   mediasoup: {
     // Worker settings
     worker: {
@@ -52,7 +54,7 @@ const config = {
         {
 //          ip: '127.0.0.1',
 //          ip: '192.168.1.107',
-            ip: '146.48.84.182',
+            ip: '146.48.84.175',
             announcedIp: null,
         }
       ],

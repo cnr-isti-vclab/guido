@@ -30,10 +30,13 @@ class Tour {
 		this.panorama.addEvent('wheelevent',  (e) => this.wheelEvent(e));
 
 		this.panorama.addEvent('viewchange',   (e) => this.viewChange(e));
+ 		this.panorama.addEvent('infoshown',    (e) => this.infoShown(e));
+ 		this.panorama.addEvent('infohide',    (e) => this.infoHide(e));
 		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
 		this.panorama.addEvent('panoclicked', (id) => this.panoClicked(id));
 
-		this.panel = document.querySelector('.tour-panel');
+	        
+	        this.panel = document.querySelector('.tour-panel');
 
 		this.initClient();
 		this.askForName();
@@ -224,6 +227,14 @@ class Tour {
 		this.sendStatus({ action: 'viewchange', view: this.panorama.getView() });
 	}
 
+  	infoShown(e) {
+ 		this.sendStatus({ action: 'infoshown', imgurl: this.panorama.getImgUrl() }); 
+	}
+	
+  	infoHide(e) {
+ 		this.sendStatus({ action: 'infohide', imgurl: null }); 
+	}
+ 
 	panoClicked(e) {
 	}
 

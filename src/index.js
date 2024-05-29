@@ -1,4 +1,3 @@
-
 import { GuideTour } from './guidetour.js'
 import { TouristTour } from './touristtour.js'
 import { Editor } from './editor.js'
@@ -40,4 +39,3 @@ switch(role) {
 		const tour1 = new TouristTour('#panorama', dataset, host, '/server');
 		break;
 }
-
