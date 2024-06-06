@@ -31,6 +31,7 @@ class Panorama {
 		this.mousePosition = { x: 0, y: 0};
 		this.highspot = null; //highlight spot.
  		this.imgurl = null;
+ 		
 
 		this.status = {  //set by guide, read by followers
 			room: -1,
@@ -150,8 +151,8 @@ class Panorama {
 			let infospots = [];
 			if( this.photos)
 			for(let target of this.photos) {
-//				 if(target.set != pano.set )
-//					continue;
+ 				 if(target.set != pano.set )
+ 					continue;
 					
 				let tx = target.translation[0];
 				let ty = target.translation[1];
@@ -373,8 +374,8 @@ class Panorama {
 	setPano(id, useScreenshot) {
 
 		let currentId = this.viewer.getScene();
-		if(id == currentId) //this.status.room)
-			return;
+ 		if(id == currentId) //this.status.room)
+ 			return;
 		
 		let pano = this.panos.find(e => e.id == id);
 		if(!pano) return;

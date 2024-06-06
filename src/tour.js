@@ -107,7 +107,7 @@ class Tour {
 			this.userCount.textContent = '?';
 
 		this.tools = {};
-		for(let tool of ['users', 'chat', 'options', 'guide', 'raise', 'laser', 'talk'])
+		for(let tool of ['users', 'chat', 'options', 'guide', 'raise', 'laser', 'talk','eyestome'])
 			this.tools[tool] = toolbar.querySelector('.tour-' + tool);
 
 		this.tools.users.addEventListener('click', (e) => this.showSection('users'));
@@ -224,7 +224,7 @@ class Tour {
 	}
 
 	viewChange(e) {
-		this.sendStatus({ action: 'viewchange', view: this.panorama.getView() });
+		this.sendStatus({ action: 'viewchange', view: this.panorama.getView(), highlight: this.panorama.getHighlight() });
 	}
 
   	infoShown(e) {
@@ -267,6 +267,8 @@ class Tour {
 		
 		li.addEventListener('click', (e) => {
 			e.stopPropagation();
+			if(this.panorama.viewer.isEyesOnGuide()) 
+				return;
 			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
 			this.panoClicked(e);
 			this.panorama.setPano(pano.id, true);
@@ -303,6 +305,7 @@ class Tour {
 	sendStatus(status) {
 		if(this.pauseStatus[status.action])
 			return;
+		
 
 		this.pauseStatus[status.action] = true;
 		setTimeout(()=> { this.pauseStatus[status.action] = false; }, this.statusResolution);

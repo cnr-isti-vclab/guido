@@ -77,6 +77,7 @@ class GuideTour extends Tour {
 
 		this.guide = true;
 		this.keepLaserAlive = false;
+		this.eyestomeOn = false;
 	}
 
 
@@ -84,6 +85,7 @@ class GuideTour extends Tour {
 		super.initToolbar();
 		//this.tools.options.classList.remove('hidden');
 		this.tools.laser.classList.remove('hidden');
+		this.tools.eyestome.classList.remove('hidden');
 		this.tools.talk.classList.add('hidden');
 
 		this.tools.guide.classList.add('hidden');
@@ -94,8 +96,14 @@ class GuideTour extends Tour {
 			this.tools.laser.classList.toggle('laser', this.keepLaserAlive);
 			if(!this.keepLaserAlive) {
 				this.panorama.removeHighlight();
-				
+				this.sendStatus({ action: "highlight_off", highlight: false });
 			}
+		});
+		this.tools.eyestome.addEventListener('click', (e) => { 
+			this.eyestomeOn = !this.eyestomeOn; 
+			this.tools.eyestome.classList.toggle('eyestome', this.eyestomeOn);
+			this.sendStatus({ eyestome: 'eyestome', eyestomevalue: this.eyestomeOn });
+			this.panorama.emit('viewchange',{});
 		});
 	}
 
@@ -125,6 +133,7 @@ class GuideTour extends Tour {
 		this.panorama.removeHighlight();
 	}
 
+	
 	highlightOn(coords) {
 		this.panorama.moveHighlight(coords);
 		this.sendStatus({ action: "highlight_on", highlight: this.panorama.getHighlight() });
@@ -141,6 +150,9 @@ class GuideTour extends Tour {
 		this.sendStatus({ action: 'highlight_move', highlight: this.panorama.getHighlight() });
 	}
 
+	viewChange(e) {
+		this.sendStatus({ action: 'viewchange', view: this.panorama.getView(), highlight: this.panorama.getHighlight(), eyestome: this.eyestomeOn });
+	}
 		//the changes are sent to the server
 /*	track() {
 		let resolution = 100; //ms

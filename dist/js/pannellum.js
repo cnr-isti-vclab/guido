@@ -43,6 +43,7 @@ var config,
     draggingHotSpot,
     isUserInteracting = false,
     isSceneChanging = false,
+    isEyesOnGuide = false,
     latestInteraction = Date.now(),
     onPointerDownPointerX = 0,
     onPointerDownPointerY = 0,
@@ -1678,7 +1679,7 @@ function render() {
         
         renderer.render(config.pitch * Math.PI / 180, config.yaw * Math.PI / 180, config.hfov * Math.PI / 180, {roll: config.roll * Math.PI / 180});
         
-        if(isSceneChanging == false)
+        if(isSceneChanging == false &&  isEyesOnGuide == false )
 	     	  renderHotSpots();
         
         // Update compass
@@ -2039,7 +2040,7 @@ function createHotSpots() {
         config.hotSpots.forEach(createHotSpot);
     }
     hotspotsCreated = true;
-    if(isSceneChanging == false)
+    if(isSceneChanging == false &&  isEyesOnGuide == false )
    	 renderHotSpots();
 }
 
@@ -2725,7 +2726,9 @@ this.isUserInteracting = function() {
 this.isSceneChanging = function() {
     return Boolean(isSceneChanging);
 }
-
+this.isEyesOnGuide = function() {
+    return Boolean(isEyesOnGuide);
+}
 /**
  * Returns the pitch of the center of the view.
  * @memberof Viewer
@@ -3093,6 +3096,16 @@ this.stopMovement = function() {
  */
 this.setSceneChanging = function(v){
 	isSceneChanging = v; 
+	if(v==false)
+		render();
+}
+
+/**
+ * set eyesonguide  state
+ * @private
+ */
+this.setEyesOnGuide = function(v){
+	isEyesOnGuide = v; 
 	if(v==false)
 		render();
 }

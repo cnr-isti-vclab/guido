@@ -12,6 +12,7 @@ class TouristTour extends Tour {
 		this.followTimeout = false; //timeout when changing view to refollow.
 		this.locked = true;
 		this.muted = true;
+		this.eyesOnGuide = false;
 		this.status = {};
 		this.streamClient.addEvent('follow', status => 	{
 			if(status.view)
@@ -19,6 +20,10 @@ class TouristTour extends Tour {
 			if(status.highlight !== null)
 				this.status.highlight = status.highlight;
 			this.status.imgurl = status.imgurl;
+			if(status.eyestome !== null)
+				this.status.eyestome = status.eyestome;
+				
+		   
 			this.follow(); 
 		});
 
@@ -133,6 +138,18 @@ class TouristTour extends Tour {
 	follow() {
 		if(!this.status)
 			return;
+			
+		if(this.status.eyestome)
+			{
+			 	this.panorama.viewer.setEyesOnGuide(this.status.eyestome===true);
+			 	this.following = this.status.eyestome; 
+			 	if(!this.eyesOnGuide){
+			 	 	this.panorama.viewer.loadScene(this.panorama.viewer.getScene());
+			 	 	this.eyesOnGuide = true;
+			 	 }
+			 }else
+			 this.eyesOnGuide = false;
+	  				
 
 		this.tools.laser.classList.toggle('laser', this.status.highlight !== null);
 
