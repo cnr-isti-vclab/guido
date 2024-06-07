@@ -53,6 +53,7 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 .tour-toolbar .active svg { opacity: 1.0; }
 .tour-toolbar .tour-raise.raised svg { stroke:red; opacity: 1.0; }
 .tour-toolbar .tour-laser.laser svg { stroke:red; opacity: 1.0; }
+.tour-toolbar .tour-eyestome.eyestome svg { stroke:red; opacity: 1.0; }
 .tour-toolbar .hidden { display:none; }
 
 [badge]:after {

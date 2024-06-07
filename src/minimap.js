@@ -364,8 +364,8 @@ export default class MiniMap {
             // get dataset
             this.#dataset = dataset;
         
-            if(!dataset.tours)
-                return;
+  //          if(!dataset.tours)
+  //              return;
         
             // Create controls bar data object
             const controlsBar = controlsBarData(utils, this);
