@@ -9,6 +9,15 @@ class GuideTour extends Tour {
 		this.panorama.addEvent('highlight_on',   (coords) => this.highlightOn(coords));
 		this.panorama.addEvent('highlight_move', (coords) => this.highlightMove(coords));
 		this.panorama.addEvent('highlight_off',  (coords) => this.highlightOff(coords));
+		this.panorama.addEvent('panzooming',  (transform) => {
+				var sBB  = this.panorama.window.pz.getBoundingBox();
+				var sizex = sBB.right-sBB.left; 
+				var sizey = sBB.bottom-sBB.top;
+				var x = transform.x / sizex; 
+				var y = transform.y / sizey; 
+		
+				this.sendStatus({ action: 'panzoom', transform: {scale:transform.scale,x:x,y:y} });}
+		);
 
 		this.streamClient.addEvent('publishing', () => { console.log('publishing'); });
 		this.streamClient.addEvent('publish error', (e) => { console.log('publish error', e); });

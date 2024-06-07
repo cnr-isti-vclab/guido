@@ -19,9 +19,20 @@ class TouristTour extends Tour {
 				this.status.view = status.view;
 			if(status.highlight !== null)
 				this.status.highlight = status.highlight;
-			this.status.imgurl = status.imgurl;
+				
+			this.status.action =  status.action;
+			if(status.action === 'infoshown') 	
+				this.status.imgurl = status.imgurl;
 			if(status.eyestome !== null)
 				this.status.eyestome = status.eyestome;
+			if(status.action === 'panzoom'){
+					var sBB  = this.panorama.window.pz.getBoundingBox();
+					var sizex = sBB.right-sBB.left; 
+					var sizey = sBB.bottom-sBB.top;
+					status.transform.x *= sizex;
+					status.transform.y *= sizey;
+					this.panorama.window.pz.setTransform(status.transform);
+			}	
 				
 		   
 			this.follow(); 

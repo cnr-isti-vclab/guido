@@ -35,7 +35,8 @@ class Tour {
 		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
 		this.panorama.addEvent('panoclicked', (id) => this.panoClicked(id));
 
-	        
+
+
 	        this.panel = document.querySelector('.tour-panel');
 
 		this.initClient();

@@ -4,22 +4,13 @@ import  { transpose, eulerToMatrix, eulerFromMatrix, matMul, applyMatrix,
 import { getIcon, createSvgElement } from './utils.js'
 import { addSignals } from './signals.js'
 
+import * as module from './panzoom.js';
+
 let correct = false; //don't remember what this did.
-
-// Function to show overlay image
-function showOverlayImage(imageSrc) {
-    var overlayImage = document.getElementById('overlayImage');
-    overlayImage.src = imageSrc;
-    document.getElementById('overlayImageContainer').style.display = 'block';
-}
-
-function closeOverlayImage() {
-    var overlayImageContainer = document.getElementById('overlayImageContainer');
-    overlayImageContainer.style.display = 'none';
-}
 
 // Attach event listener to close button
 
+let scale = 1;
         
 class Panorama {
 	constructor(panourl, container) {
@@ -56,6 +47,18 @@ class Panorama {
 
 		if(panourl)
 			this.load(panourl);
+		
+	 	var area = document.getElementById('overlayImage');
+	 	window.pz = panzoom(area, {autocenter: true, bounds: true,boundsPadding: 0.1});
+	 	window.pz.setMinZoom(1.0);
+	 	window.pz.setMaxZoom(5.0);
+	 	this.window = window;
+	 	area.addEventListener('wheel', ()=>{
+	 		this.emit('panzooming',window.pz.getTransform());
+	 	});
+	 	area.addEventListener('mousemove', ()=>{
+	 		this.emit('panzooming',window.pz.getTransform());
+	 	});
 	}
 
 	load(url) {
@@ -265,7 +268,7 @@ class Panorama {
 					clickHandlerFunc: (e,imgurl) => { 
 						// Display overlay image
 						this.imgurl = this.baseurl+imgurl;
-						showOverlayImage(this.imgurl);
+						this.showOverlayImage(this.imgurl);
 						this.emit('infoshown');
 						e.preventDefault(); 
 						e.stopPropagation(); 
@@ -296,9 +299,10 @@ class Panorama {
 
 		var closeButton = document.querySelector('.closeButton');
 		closeButton.addEventListener('click', () => { 
-			closeOverlayImage();
+			this.closeOverlayImage();
 			this.imgurl = null;
 			this.emit('infohide') 
+		 
 		} );
 
 		await this.setPano(this.panos[0].id);
@@ -307,6 +311,25 @@ class Panorama {
 		setTimeout(() => { this.sceneChangeFadeDone(this.panos[0].id); }, 100);
 		this.emit('loaded');
 	}
+
+	showOverlayImage(imageSrc) {
+	    var overlayImage = document.getElementById('overlayImage');
+	    overlayImage.src = imageSrc;
+	    this.window.pz.setTransform({scale:1.0,x:0,y:0});
+	    document.getElementById('overlayImageContainer').style.display = 'flex';
+	    
+	    overlayImage.classList.remove('zoomed'); // Ensure image starts unzoomed
+	    
+	    overlayImage.style.left = '0';
+	    overlayImage.style.top = '0';
+	  
+	}
+	
+	closeOverlayImage() {
+	    var overlayImageContainer = document.getElementById('overlayImageContainer');
+	    overlayImageContainer.style.display = 'none';
+	}
+
 
 	keyDown(event) {
 		if(event.ctrlKey) {
@@ -351,10 +374,10 @@ class Panorama {
 			this.viewer.setHfov(fov, timeout);
 		}
 		this.setHighlight(status.highlight);
- 		if(status.imgurl)
- 			showOverlayImage(status.imgurl);// to fix
- 				else
- 			closeOverlayImage(status.imgurl);// to fix
+ 		if(status.action ==='infoshown')
+ 			this.showOverlayImage(status.imgurl); 
+ 		if(status.action ==='infohide')
+ 			this.closeOverlayImage(null); 
  			
 	}
 
@@ -626,7 +649,8 @@ addSignals(Panorama,
 	'scenechange', //afer pano is changed
 	'panoclicked', //before pano is changed, when the user click
 	'infoshown',
-	'infohide'
+	'infohide',
+	'panzooming',
 	);
 
 export { Panorama }
