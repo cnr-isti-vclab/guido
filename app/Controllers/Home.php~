@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Controllers;
+
+class Home extends BaseController
+{
+    public function index() {
+        return view('home');
+    }
+    
+    public function tours($dataset) {
+    	$request = request();
+    	if($dataset == 'lucca')
+    		$dataset = '/datasets/lucca/lucca/dataset.json';
+    	if($dataset == 'miracoli')
+    		$dataset = '/datasets/miracoli/panos/dataset.json';
+    		
+    		
+    	//leggiamo la chiave se c'e' (per passarla
+    	$data = [
+    	    'key' => $request->getGet('key'),
+	    	'role' => $request->getGet('role'),
+	    	'dataset' => $dataset,
+	    	'saveurl' => '/save'.$dataset
+	    ];;
+		if($data['role'] == 'guide' && $data['key'] != '128') {
+			$data['role'] = '';
+			return "problem with password";
+		}
+    	return view('tour', $data);
+    }
+    public function save() {
+        $uri = $this->request->getUri();
+        $filename = ROOTPATH."/dist".substr($uri->getPath(), 5);
+        header('Content-Type: application/json');
+        $exists = file_exists($filename);
+        if(!$exists)
+            die("{'error': 'Dataset not found' }");
+
+        file_put_contents($filename, file_get_contents('php://input'));
+        $data = ['done' => true];
+        $str = json_encode($data, true);
+        echo($str);
+    }
+}
