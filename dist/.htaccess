@@ -29,20 +29,13 @@ Options -Indexes
 	# Checks to see if the user is attempting to access a valid file,
 	# such as an image or css document, if this isn't true it sends the
 	# request to the front controller, index.php
-#	RewriteCond %{REQUEST_FILENAME} !-f
-#	RewriteCond %{REQUEST_FILENAME} !-d
-#	RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
 
 	# Ensure Authorization header is passed along
 	RewriteCond %{HTTP:Authorization} .
 	RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-	
-	#send the json file to upload
-	#RewriteRule ^(.*\.json)$ upload.php?url=$1 [L,QSA]
-	
-	RewriteCond %{REQUEST_METHOD} ^POST$
-	RewriteRule ^(.*\.json)$ upload.php?file=$1&action=write [L,QSA]
-
 </IfModule>
 
 <IfModule !mod_rewrite.c>

@@ -9,6 +9,7 @@
 	<link type="text/css"rel="stylesheet" href="/css/pannellum.css"/>
 	<link type="text/css" rel="stylesheet" href="/css/style.css">
 	<link type="text/css" rel="stylesheet" href="/css/minimap.css">
+	<link type="text/css" rel="stylesheet" href="/css/navigation.css">
 	<style>
 		.modal-backdrop { display:none; }
 /*		.tour-small-raise {
@@ -260,6 +261,12 @@
           <span class="closeButton" onclick="closeOverlayImage()">Close</span>
           </div>
 
+	  <div id="button-container">
+	    <button id="button1" class="navbtn" ></button>
+	    <button id="button2" class="navbtn" ></button>
+	    <button id="button3" class="navbtn" ></button>
+	  </div>
+  
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 	<script type="text/javascript" src="/js/libpannellum.js"></script>
 	<script type="text/javascript" src="/js/pannellum.js"></script>

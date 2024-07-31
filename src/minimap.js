@@ -117,7 +117,7 @@ export default class MiniMap {
         P1: 150,
         P2: 300
     };
-    #panosVisibility = null;
+    #panosVisibility = 'hidden';
     #editorMode = 0;
     #modeTypes = { DEFAULT: 0, EDIT_VISIBILITY: 1 }
     #saveURL = 'http://127.0.0.1:3000/';
@@ -360,6 +360,7 @@ export default class MiniMap {
      * @throws {Error} Errore se il pano con ID specificato non è presente nel dataset
      */
     async init (dataset, panoID = -1) {
+  
         try {
             // get dataset
             this.#dataset = dataset;

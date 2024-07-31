@@ -59,6 +59,7 @@ class Panorama {
 	 	area.addEventListener('mousemove', ()=>{
 	 		this.emit('panzooming',window.pz.getTransform());
 	 	});
+	 	this.initNavButtons();
 	}
 
 	load(url) {
@@ -152,12 +153,12 @@ class Panorama {
 			};
 
 			let infospots = [];
-			if( this.photos)
+			if(this.photos)
 			for(let target of this.photos) {
  				 if(target.set != pano.set )
  					continue;
 					
-				let tx = target.translation[0];
+/*				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
 				let dir = [tx - x, ty - y, tz - z, 1];
@@ -166,7 +167,12 @@ class Panorama {
 				let  range = 20;
 
 				if(d < range) 
-				infospots.push(target);
+*/				
+				if(!target.visiblefrom)
+					continue;
+				let my_id = target.visiblefrom.find(item=> item===pano.id);
+				if(my_id === pano.id)
+					infospots.push(target);
 				
 			}
 			
@@ -174,7 +180,8 @@ class Panorama {
 
 			if(pano.links)
 			for(let ti of pano.links) {
-				let target = this.panos[ti];
+//				let target = this.panos[ti];
+				let target = this.panos.find(item => item.id === ti);
 				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
@@ -312,6 +319,54 @@ class Panorama {
 		this.emit('loaded');
 	}
 
+	 initNavButtons() {
+		let b1 = document.getElementById('button1');
+		 
+		let moveRight = () => {
+			let currentId = this.viewer.getScene();
+			let pano = this.panos.find(e => e.id == currentId);
+			let x = pano.translation[0];
+			let y = pano.translation[1];
+			let z = pano.translation[2];
+			let currView = this.getView();
+			let yaw = this.viewer.getYaw();
+			let lon  =  currView.lon;
+			let cam  = this.camera;
+			let config  = this.viewer.getConfig();
+			let moveto = null;
+			let b = pano.initialYaw;
+			
+			let h = lon-pano.initialYaw;
+			
+			for(let hs of config.hotSpots){
+				let a = hs.yaw;
+			}
+			
+/*			for(let ti of pano.links) {
+				let target = this.panos[ti];
+				let tx = target.translation[0];
+				let ty = target.translation[1];
+				let tz = target.translation[2];
+
+				
+				let dir = [tx - x, ty - y, tz - z, 1];
+				
+				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let yaw = 90 + angle;
+				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+				
+				if ( ( yaw > currView.lon+90-45 ) && (yaw > currView.lon+90+45))
+				 moveto = ti;		
+			}
+*/
+//			if(moveto!=null){
+//					this.setPano(moveto);
+//				}
+		};
+		 
+		b1.addEventListener('click', (e) => moveRight() );
+	}
+	
 	showOverlayImage(imageSrc) {
 	    var overlayImage = document.getElementById('overlayImage');
 	    overlayImage.src = imageSrc;

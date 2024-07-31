@@ -173,6 +173,9 @@ class Tour {
 		enter.addEventListener('click', (e) => sendChat() );
 	}
 
+
+
+
 	updateChat(msg) {
 		let msgs = document.querySelector('#tour-chat ul');
 		msgs.innerHTML = `<li>${msg.username}: ${msg.text}</li>` + msgs.innerHTML;
