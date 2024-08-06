@@ -135,6 +135,13 @@ class GuideTour extends Tour {
 	updateUsers(users) {
 		let count = Object.values(users).filter(u => u.raised).length;
 		this.tools.raise.setAttribute('badge', count);
+		
+		const element = document.getElementById('question-alert');
+		if(count>0) 
+		  element.hidden = false;  
+		else
+		  element.hidden = true;  
+		  
 		super.updateUsers(users);
 	}
 

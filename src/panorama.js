@@ -83,6 +83,7 @@ class Panorama {
 				//pano.url = tour.name + "/" + pano.url;
 				//pano.priority = 2;
 				pano.set = set.set;
+				pano.photos = false;
 			}
 			json.panos = [...json.panos, ...set.panos];
 		}
@@ -156,17 +157,12 @@ class Panorama {
 			for(let target of this.photos) {
  				 if(target.set != pano.set )
  					continue;
-					
-				let tx = target.translation[0];
-				let ty = target.translation[1];
-				let tz = target.translation[2];
-				let dir = [tx - x, ty - y, tz - z, 1];
-				let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-				let  range = 20;
-
-				if(d < range) 
-				infospots.push(target);
+				
+				if(!target.visiblefrom)
+					continue;
+				let my_id = target.visiblefrom.find(item=> item===pano.id);
+				if(my_id === pano.id)
+					infospots.push(target);
 				
 			}
 			
@@ -174,7 +170,9 @@ class Panorama {
 
 			if(pano.links)
 			for(let ti of pano.links) {
-				let target = this.panos[ti];
+				//let target = this.panos[ti];
+				let target = this.panos.find(item => item.id === ti);
+				
 				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
@@ -202,6 +200,23 @@ class Panorama {
 				if(target.priority == 0)
 					pitch = 1;
 
+
+				// check if there are visible photos from the target
+				let infospots_T = [];
+				if(this.photos)
+				for(let photo of this.photos) {
+	 				 if(photo.set != pano.set )
+	 					continue;
+					
+					if(!photo.visiblefrom)
+						continue;
+					let  id = photo.visiblefrom.find(item=> item===target.id);
+					if(id === target.id)
+						target.photos = true;
+					
+				}
+			
+			
 				hotSpots.push({
 					pitch: pitch,
 					//yaw: -yaw - (pano.initialYaw -90),
@@ -528,6 +543,14 @@ class Panorama {
 			html += visibility;
 		}
 		div.innerHTML = html;
+		if(target.photos){
+			let svg = div.querySelector('svg');
+			let element = svg.firstElementChild;
+			if (element) {
+			  element.setAttribute('stroke', '#F00');
+			}
+			}
+			
 		if(spot) {
 			let circle = div.querySelector('.tour-spot circle');
 			let ry = Math.max(0.2, Math.min(1, Math.sin(Math.atan(3.6/distance))));
@@ -648,6 +671,7 @@ addSignals(Panorama,
 	'highlight_move',
 	'scenechange', //afer pano is changed
 	'panoclicked', //before pano is changed, when the user click
+	'scenechangefadedone',
 	'infoshown',
 	'infohide',
 	'panzooming',
