@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Controllers;
 
 class Home extends BaseController
@@ -14,7 +15,9 @@ class Home extends BaseController
     		$dataset = '/datasets/lucca/lucca/dataset.json';
     	if($dataset == 'miracoli')
     		$dataset = '/datasets/miracoli/panos/dataset.json';
-    		
+        if($dataset == 'miracoli_dawn')
+                $dataset = '/datasets/miracoli_dawn/panos/dataset.json';
+
     		
     	//leggiamo la chiave se c'e' (per passarla
     	$data = [
@@ -31,13 +34,16 @@ class Home extends BaseController
     }
     public function save() {
         $uri = $this->request->getUri();
-        $filename = ROOTPATH."/public".substr($uri->getPath(), 5);
+        $filename = ROOTPATH."dist/".substr($uri->getPath(), 5);
+        
         header('Content-Type: application/json');
         $exists = file_exists($filename);
         if(!$exists)
-            die("{'error': 'Dataset not found' }");
+            die(json_encode(['error' => 'not found'], true));
 
         file_put_contents($filename, file_get_contents('php://input'));
+      
+        
         $data = ['done' => true];
         $str = json_encode($data, true);
         echo($str);

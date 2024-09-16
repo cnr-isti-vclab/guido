@@ -218,7 +218,7 @@ async function sendData (dataset, url, errorShowModal = true) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dataset)
+        body: JSON.stringify(dataset,null,2)
     }
 
     let r = true;

@@ -21,8 +21,10 @@ class Panorama {
 		this.container = container;
 		this.mousePosition = { x: 0, y: 0};
 		this.highspot = null; //highlight spot.
+ 		this.movingtargetspot = null;
+ 		this.movingtarget = null;
  		this.imgurl = null;
- 		
+		this.ctrlKeyPressed = false;
 
 		this.status = {  //set by guide, read by followers
 			room: -1,
@@ -84,6 +86,7 @@ class Panorama {
 				//pano.url = tour.name + "/" + pano.url;
 				//pano.priority = 2;
 				pano.set = set.set;
+				pano.photos = false;
 			}
 			json.panos = [...json.panos, ...set.panos];
 		}
@@ -157,17 +160,7 @@ class Panorama {
 			for(let target of this.photos) {
  				 if(target.set != pano.set )
  					continue;
-					
-/*				let tx = target.translation[0];
-				let ty = target.translation[1];
-				let tz = target.translation[2];
-				let dir = [tx - x, ty - y, tz - z, 1];
-				let d = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-				let  range = 20;
-
-				if(d < range) 
-*/				
+				
 				if(!target.visiblefrom)
 					continue;
 				let my_id = target.visiblefrom.find(item=> item===pano.id);
@@ -180,8 +173,7 @@ class Panorama {
 
 			if(pano.links)
 			for(let ti of pano.links) {
-//				let target = this.panos[ti];
-				let target = this.panos.find(item => item.id === ti);
+				let target = this.panos.find(item => item.id === ti[0]);
 				let tx = target.translation[0];
 				let ty = target.translation[1];
 				let tz = target.translation[2];
@@ -197,11 +189,16 @@ class Panorama {
 						dir = applyMatrix(pano.rotation, dir);
 					}
 				} 
-				/* working with positions from gps 
-				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
-				*/
-				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
-				let yaw = 90 + angle;
+
+				let angle = 180*Math.atan2(dir[0], dir[2])/3.1415;
+				
+				let yaw =  (angle + 360)%360;  	// yaw and initialYaw i nthe same reference system now
+				yaw =  (yaw-pano.initialYaw+360)%360;  // distance between yaw and initialiYaw in [0,360]
+				yaw = ((yaw + 180)%360)-180;
+
+				//yaw = -45;
+
+
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 				let H = 2.2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
@@ -209,17 +206,47 @@ class Panorama {
 				if(target.priority == 0)
 					pitch = 1;
 
+
+				// check if there are visible photos from the target
+				let infospots_T = [];
+				if(this.photos)
+				for(let photo of this.photos) {
+	 				 if(photo.set != pano.set )
+	 					continue;
+					
+					if(!photo.visiblefrom)
+						continue;
+					let  id = photo.visiblefrom.find(item=> item===target.id);
+					if(id === target.id)
+						target.photos = true;
+					
+				}
+			
+			
 				hotSpots.push({
-					pitch: pitch,
+					pitch: ti[2],
 					//yaw: -yaw - (pano.initialYaw -90),
-					yaw: yaw,
+					yaw: ti[1],
 					type: "scene",
 					sceneId: target.id,
-					createTooltipFunc: (div, args) => { this.createHotspot(div, pano, target, dist); },
-					createTooltipArgs: [1, 2],
-					clickHandlerFunc: (e) => { 
+					panorama: this,
+					createTooltipFunc: (div, args) => { this.createHotspot(div, args,pano, target, dist); },
+//					createTooltipArgs: [1, 2],
+					createTooltipArgs: {label:target.label,id:target.id,yaw:yaw,pitch:pitch},
+					clickHandlerFunc: function (e) { 
+						if(e.ctrlKey) {
+							this.panorama.movingtarget = {sceneId : this.sceneId, yaw:this.yaw, pitch : this.pitch};
+							e.preventDefault(); 
+							e.stopPropagation(); 
+							}
+							else{
+							    this.panorama.removeMovingTarget();
+							}
+					}
+/*					clickHandlerFunc: (e) => { 
 						//TODO clean this mess!
 						if(e.target.closest('.tour-visibility')) return;
+						if(e.target.closest('.tour-move')) return;
 						this.emit('panoclicked');
 
 						this.setPano(target.id); 
@@ -228,6 +255,7 @@ class Panorama {
 						e.stopPropagation(); 
 
 					},
+*/					
 				})
 			}
 	
@@ -253,8 +281,15 @@ class Panorama {
 				/* working with positions from gps 
 				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
 				*/
-				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
-				let yaw = 90 + angle;
+//				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+				let angle = 180*Math.atan2(dir[0], dir[2])/3.1415;
+//				let yaw = 90 + angle;
+				let yaw =  (angle + 180); // yaw and initialYaw i nthe same reference system now
+				
+				yaw =  (yaw-pano.initialYaw);  // distance between yaw and initialiYaw in [0,360]
+				yaw = (yaw%360)-180; 		// remap to [-180,180] 
+				
+				
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
 
 				//if(pano.id == 3)
@@ -387,14 +422,23 @@ class Panorama {
 
 
 	keyDown(event) {
+
+/*
+			this.moving_hotspot = {};
+			this.moving_hotspot.html = moving_html;
+			this.moving_hotspot.yaw    = args.yaw;
+			this.moving_hotspot.pitch  = args.pitch;
+*/ 
 		if(event.ctrlKey) {
 			let coords = this.mousePositionToCoords(this.mousePosition); 
 			this.emit('highlight_on', coords);
+			this.ctrlKeyPressed = true;
 		}
 	}
 	keyUp(event) {
-		if(!event.ctrlKey)
-			this.emit('highlight_off');
+		if(!event.ctrlKey){
+				this.emit('highlight_off');
+			}
 	}
 
 	mouseMove(event) {
@@ -404,6 +448,14 @@ class Panorama {
 		let y = (event.clientY || event.pageY) - bounds.top;
 		this.mousePosition = this.mouseEventToPosition(event);
 
+		if(this.editor){
+			if(event.ctrlKey)
+				if( this.movingtarget!=null) {
+					let coords = this.mouseEventToCoords(event); 
+					this.emit('movetarget_on', coords);
+			}
+		}
+		else
 		if(event.ctrlKey) {
 			let coords = this.mouseEventToCoords(event); 
 			this.emit('highlight_move', coords);
@@ -450,7 +502,6 @@ class Panorama {
 	}
  
 	setPano(id, useScreenshot) {
-
 		let currentId = this.viewer.getScene();
  		if(id == currentId) //this.status.room)
  			return;
@@ -471,7 +522,7 @@ class Panorama {
 			let lat = this.viewer.getPitch();
 			let lon = this.viewer.getYaw();
 			
-			let north = -current.initialYaw + pano.initialYaw;
+			let north = current.initialYaw - pano.initialYaw;
 			this.camera = { lat, lon, fov, north };
 		}
 
@@ -539,7 +590,7 @@ class Panorama {
 		this.viewer.addHotSpot(this.highspot);
 		this.viewer.renderHotSpot(this.highspot);
 	}
-
+	
 	removeHighlight() {
 		if(!this.highspot) return;
 		this.viewer.removeHotSpot(this.highspot.id);
@@ -556,7 +607,83 @@ class Panorama {
 	}
 
 
-	createHotspot(div, pano, target, distance) {
+
+	createMovingTarget(mt) {
+		let id = 'A' + (1000000*Math.random()).toFixed(0);
+		
+		let {pitch, yaw } = mt;
+
+		this.movingtargetspot = {
+			pano: this,
+			id,
+			pitch,
+			yaw,
+			scale: true,
+			type: "info",
+			zIndex: "10000",
+			createTooltipFunc: function (hotSpotDiv)  { 
+				let spot = createSvgElement('svg', { viewport: '0 0 50 50' });
+				spot.classList.add('tour-highlight');
+				
+				// here fix the icon
+				let path = createSvgElement('circle', { r: 20, cx: 25, cy: 25, fill:'rgb(0, 128, 200, 0.5)', stroke:'blue' })
+				spot.append(path);
+
+				hotSpotDiv.style.backgroundImage = 'none';
+				hotSpotDiv.style.zIndex = "10000";
+				hotSpotDiv.append(spot);
+				let pano  = this.pano;
+				let yaw   = this.yaw;
+				let pitch = this.pitch;
+				hotSpotDiv.addEventListener('dblclick', function(event) {
+								pano.emit('reassign_target_position',{sceneId:pano.movingtarget.sceneId, yaw : yaw,pitch:pitch} );
+								}
+				 );
+			}
+		}
+		 
+    
+    
+		this.viewer.addHotSpot(this.movingtargetspot);
+		this.viewer.renderHotSpot(this.movingtargetspot);
+	}
+	
+	reassignTarget(target){
+		let config  = this.viewer.getConfig();
+		let currentId = this.viewer.getScene(); // get the current id
+
+		// update the hotspot position in pannellum
+		let index = config.scenes[currentId].hotSpots.findIndex(e => e.sceneId == target.sceneId);
+		let curhs = config.scenes[currentId].hotSpots[index];
+		curhs.yaw = this.movingtargetspot.yaw;
+		curhs.pitch = this.movingtargetspot.pitch;
+		Object.assign(config.scenes[currentId].hotSpots[index], curhs);
+
+		// update the link position
+		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == target.sceneId);
+		Object.assign(this.panos[currentId].links[indexpanos], [target.sceneId,curhs.yaw,curhs.pitch]);
+		
+		this.movingtarget = null;
+		this.removeMovingTarget();
+	}
+	
+	removeMovingTarget() {
+		if(!this.movingtargetspot) return;
+		this.viewer.removeHotSpot(this.movingtargetspot.id);
+		this.movingtargetspot = null;
+	}
+
+	moveMovingTarget({pitch, yaw}) {
+		if(!this.movingtargetspot)
+			this.createMovingTarget({pitch, yaw});
+		this.movingtargetspot.pitch = pitch;
+		this.movingtargetspot.yaw = yaw;
+		if(this.movingtargetspot.div)
+			this.viewer.renderHotSpot(this.movingtargetspot);
+	}
+	
+	createHotspot(div, args, pano, target, distance) {
+		
 		div.style.backgroundImage = 'none';
 		if(target.skip) return; //this is just for editor stuff
 		div.setAttribute('title', target.label || target.id);
@@ -570,6 +697,7 @@ class Panorama {
 			case 1: html = getIcon('waypoint'); break;
 			default: html = getIcon('spot'); spot = true; break;
 		}
+		let moving_html = html;
 		if(this.editor) {
 			let visibility = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="tour-visibility">
 			<g class="tour-visible">
@@ -580,9 +708,18 @@ class Panorama {
 				 <path d="M 16.424581,16.424332 a 7.5004924,7.5004924 0 0 1 -4.42432,1.534361 c -5.2138477,0 -8.193191,-5.958684 -8.193191,-5.958684 A 13.742213,13.742213 0 0 1 7.5759379,7.5756856 m 2.8601681,-1.355598 a 6.7928991,6.7928991 0 0 1 1.564155,-0.1787614 c 5.213848,0 8.193188,5.9586838 8.193188,5.9586838 a 13.779455,13.779455 0 0 1 -1.608842,2.376023 M 13.57931,13.57906 a 2.2345062,2.2345062 0 1 1 -3.1581,-3.158103" />
 				 <line y2="20.19319" x2="20.19319" y1="3.8068109" x1="3.8068109" />
 			 </g></svg>`;
+			 
 			html += visibility;
 		}
 		div.innerHTML = html;
+		if(target.photos){
+			let svg = div.querySelector('svg');
+			let element = svg.firstElementChild;
+			if (element) {
+			  element.setAttribute('stroke', '#F00');
+			}
+			}
+			
 		if(spot) {
 			let circle = div.querySelector('.tour-spot circle');
 			let ry = Math.max(0.2, Math.min(1, Math.sin(Math.atan(3.6/distance))));
@@ -597,7 +734,7 @@ class Panorama {
 			let v = div.querySelector('.tour-visibility'); //tour-visibility');
 			let onclick = (e) => {
 				div.classList.toggle('hidden');
-				pano.skipLinks.push(target.id);
+				pano.skipLinks.push(target.id); // includere gli skiplink nel caricamento del json
 				e.stopPropagation();
 				e.preventDefault();
 			}
@@ -606,7 +743,14 @@ class Panorama {
 			//v.addEventListener('pointerup', onclick);
 			//v.addEventListener('touchend', onclick);
 			
-		}
+/*	
+			this.moving_hotspot = {};
+			this.moving_hotspot.html = moving_html;
+			this.moving_hotspot.yaw    = args.yaw;
+			this.moving_hotspot.pitch  = args.pitch;
+
+			
+*/		}
 
 	}
 
@@ -703,9 +847,13 @@ addSignals(Panorama,
 	'highlight_move',
 	'scenechange', //afer pano is changed
 	'panoclicked', //before pano is changed, when the user click
+	'scenechangefadedone',
 	'infoshown',
 	'infohide',
 	'panzooming',
+	'movetarget_on',
+	'movetarget_off',
+	'reassign_target_position'
 	);
 
 export { Panorama }

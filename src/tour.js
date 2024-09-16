@@ -186,7 +186,7 @@ class Tour {
 	}
 
 
-	async askForName() {
+    async askForName() {
 
 
 		//TODO check for connected.
@@ -209,7 +209,7 @@ class Tour {
 			this.streamClient.sendMsg('username', this.username);
 			dialog.style.display = 'none';
 
-			let uservideo = document.querySelector('#users_video video');
+            let uservideo = document.querySelector('#users_video video');
 			uservideo.play();
 		}
 		username.addEventListener('keydown', (e) => { if(e.keyCode == 13) join(); });

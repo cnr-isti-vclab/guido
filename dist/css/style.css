@@ -3,6 +3,16 @@
 html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial;}
 #container { position: relative; width:100%; height:100%; }
 
+
+#question-alert {
+  position: fixed;
+  bottom: 95%;
+  left: 310px; 
+  width: 30px;  
+  height: 30px;  
+}
+
+
 #tour-initial {
 	position:absolute;
 	width:100%;
@@ -152,7 +162,7 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
  	width: 32px;
 }
 
-.tour-location, .tour-location path, .tour-waypoint, .tour-spot {
+.tour-location, .tour-location, .tour-highlight path, .tour-waypoint, .tour-spot,.tour-spot-photos {
 	/*fill: none; */
 	fill:rgb(255, 255, 255, 0.5);
 	stroke: #000;
@@ -160,6 +170,9 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 }
 .tour-spot {
 	fill:rgb(255, 255, 255, 0.5);
+}
+.tour-spot-photos {
+	stroke: #F00;
 }
 .tour-highlight {
 	width:50px;
@@ -176,7 +189,11 @@ html, body { width:100%; height:100%; padding:0px; margin:0px; font-family:arial
 	fill:rgba(255, 255, 255, 0.4);;
 }
 
-.tour-visibility .tour-hidden, .hidden .tour-visibility .tour-visible {	display:none; }
+.tour-move:hover {
+	fill:rgba(255, 0, 255, 0.4);
+}
+
+.tour-visibility .tour-hidden, .hidden .tour-visibility .tour-visible .tour-move {	display:none; }
 .hidden .tour-visibility .tour-hidden { display:block; }
 
 .tour-entrypriority svg, .tour-entrypriority path {
@@ -228,3 +245,8 @@ svg.tour-drawing {
 .pnlm-info-box {
 	display:none;
 }
+
+
+
+
+

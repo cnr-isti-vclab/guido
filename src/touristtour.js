@@ -166,7 +166,7 @@ class TouristTour extends Tour {
 
 		if(this.following === true && this.looking !== true) {
 			document.querySelector('.tour-guide').classList.toggle('follow', true);
-			this.panorama.setStatus(this.status, 0);
+			this.panorama.setStatus(this.status, 100);
 		}
 	}
 
