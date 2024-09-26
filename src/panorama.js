@@ -114,16 +114,6 @@ class Panorama {
 		}
 		config.firtstScene = this.accessPoints[0];
 		for(let pano of this.panos) {
-			/*pano.initialYaw = 0;
-			if(pano.rotation.length) {
-				let r = pano.rotation;
-
-				let R = deviationMatrix(r);
-				let euler = eulerFromMatrix(R, 'YXZ'); //y is up (yaw), x is pitch, z is roll
-				pano.initialYaw      = euler[1]; 
-			}*/
-			
-
 			if(correct) {
 				pano.horizontalPitch = -euler[0];
 				pano.horizontalRoll  = -euler[2];
@@ -661,7 +651,7 @@ class Panorama {
 
 		// update the link position
 		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == target.sceneId);
-		Object.assign(this.panos[currentId].links[indexpanos], [target.sceneId,curhs.yaw,curhs.pitch]);
+		Object.assign(this.panos[currentId].links[indexpanos], [target.sceneId,curhs.yaw,curhs.pitch,'manual']);
 		
 		this.movingtarget = null;
 		this.removeMovingTarget();

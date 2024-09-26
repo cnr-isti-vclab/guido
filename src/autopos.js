@@ -22,8 +22,7 @@ class Autopos {
 		}
 
 		// Mark this node as visited
-		if(d>0) 
-			visitedNodes.add(nodeIndex);
+		visitedNodes.add(nodeIndex);
 		console.log(`Visiting node ${nodeIndex}`);
 
 		// Get the current node's outgoing links
@@ -41,7 +40,7 @@ class Autopos {
 		        visitedEdges.push({
 		            tail: nodeIndex,
 		            head: index,
-		            target_yaw: yaw*Math.PI/180, // atan2 returns value in radias, so yaw and pitch must be in radians too
+		            target_yaw: yaw*Math.PI/180, // atan2 returns value in radians, so yaw and pitch must be in radians too
 		            target_pitch: pitch*Math.PI/180,
 		            computed_yaw : cyaw*Math.PI/180,
 		            computed_pitch : cpitch*Math.PI/180
@@ -50,47 +49,108 @@ class Autopos {
 		        // Recursively visit the connected node
 		        dfs(index,d+1);
 		  	}
+		  	// look for link to nodeIndex from index (this assumes that edges are bidirectional)
+ 		  	for(let lnk of panorama.panos[index].links){
+			  	 let [idx, yaw, pitch, how] = lnk; // Destructure the array, where 'how' is the last element
+			  	   if (idx === nodeIndex && how === 'manual') {
+					dfs(index,d+1);
+				   }
+		  	}
+		  	 
 	            }
 	   	 }
 
 	    // Start the DFS traversal from the root node
 	    dfs(rootIndex,0);
 
+// DEBUG
+visitedNodes.delete(rootIndex);
+//			
 	    // Return the set of nodes and the list of visited edges
 	    return [ visitedEdges, [...visitedNodes] ];
 	}
 	
 
 	
-	// a problem is created with a set of constrained edges
-	solve(panorama,edges,nodes){
+	setupProblem(panorama,edges,nodes){
 		let H = 2.2;
-
-		// nodes contains the sorted indices of the position that will be optimized
-		
+		let correct_result = [0,0,0];
+			
 		let N = nodes.length*2; // two variables (x,y) for each node
 		let M = edges.length*2; // two contraints for each edge
 		 
-		
+ //		console.log('initial pos');
+ //		console.log(panorama.panos[nodes[0]].translation);
+ 		
 		let A = math.sparse(math.zeros([M, N], 'sparse'));
-		let b = math.sparse(math.zeros([M,1], 'sparse'));
+		let b = math.sparse(math.zeros([M, 1], 'sparse'));
+
+
+
+	
+		// initial estimation
+		let cnt = Array(nodes.length).fill(0);
+		let inipos = Array(nodes.length*2).fill(0);
+		for(let [ie, e] of edges.entries()){
+			//let p_head = panorama.panos[e.head].translation;
+			//let p_tail = panorama.panos[e.tail].translation;
+			let i_xy = nodes.indexOf(e.head);
+			cnt[i_xy]++;
+			
+//			let pos = transf.yawPitchToPos(panorama.panos[e.tail],e.target_yaw*180/Math.PI,e.target_pitch*180/Math.PI);
+//			console.log("correct ",transf.yawPitchToPos(panorama.panos[e.tail],e.target_yaw*180/Math.PI,e.target_pitch*180/Math.PI));
+			let pos = panorama.panos[e.head].translation;
+			
+			inipos[i_xy*2]   += pos[0];
+			inipos[i_xy*2+1] += pos[2];
+//			console.log('inipos',i_xy,pos[0],pos[2]);
+		}		
+		console.log('avg inipos');
+		for(let [i, n] of nodes.entries()){
+			inipos[i*2] 	/= cnt[i];
+			inipos[i*2+1] /= cnt[i];
+//			console.log(inipos[i*2],inipos[i*2+1]);
+		}
 		
-		let ie = 0;
-		let correct_result = [0,0];
-		for(let e of edges){
-			let p_head = panorama.panos[e.head].translation;
+		
+		let out_d_yaw =[0,0];
+		let out_d_pitch = [0,0];
+		let out_delta_yaw = 0;
+		let out_delta_pitch = 0;
+		
+		for(let [ie, e] of edges.entries()){
+		
+			// find the place of edges.head in nodes
+			let i_xy = nodes.indexOf(e.head)*2;			
+			
+			let p_head = [inipos[i_xy],0,inipos[i_xy+1]];
 			let p_tail = panorama.panos[e.tail].translation;
 			let dir = [p_head [0] - p_tail [0] ,p_head [1] - p_tail [1] ,p_head [2] - p_tail [2] ];
+			
+			
+			let res = transf.posToYawPitch(p_head,panorama.panos[e.tail]);
+			res[0]*=Math.PI/180;
+			res[1]*=Math.PI/180;
+			
+			e.computed_yaw 	= res[0];
+			e.computed_pitch 	= res[1];
+			
 			let a = dir[0]*dir[0]+dir[2]*dir[2];
-			let d_yaw =[- dir[2] / a,dir[0] / a];// derivative of atan2   on x,y
-						
+			let d_yaw =[- dir[0] / a,dir[2] / a];// derivative of atan2   on x,y
+			
+			console.log('dyaw',d_yaw);
+			
+			
 			let a_sr = Math.sqrt(a);
 			let c = H*H+a;
 			
-			let d_pitch =[- H / c*dir[0]/ a_sr,1.0 / c*dir[2]];
+			// THIS DERIVATIVE IS WRONG!
+			console.log('dir',dir);
+ 			let d_pitch =[- (-H) *dir[0]/ (c*a_sr), - (-H)*dir[2] / (c*a_sr)];
+//			d_pitch = [ dir[0]/a, dir[2]/a]
+
+			console.log('dpitch',d_pitch);
 			
-			// find the place of edges.head in nodes
-			let i_xy = nodes.indexOf(e.head)*2;
 			
 			A.set([ie*2,i_xy  ],d_yaw[0]);
 			A.set([ie*2,i_xy+1],d_yaw[1]);
@@ -99,33 +159,81 @@ class Autopos {
 			A.set([ie*2+1,i_xy  ],d_pitch[0]);
 			A.set([ie*2+1,i_xy+1],d_pitch[1]);
 			b.set([ie*2+1,0],e.target_pitch + ( d_pitch[0]*p_head[0]+d_pitch[1]*p_head[2]-e.computed_pitch));
-
-			ie = ie+1;
 			
-			correct_result = transf.yawPitchToPos(panorama.panos[e.tail],e.target_yaw,e.target_pitch);
+			
+			out_d_yaw =d_yaw;
+			out_d_pitch = d_pitch;
+			out_delta_yaw = e.target_yaw-e.computed_yaw;
+			out_delta_pitch = e.target_pitch-e.computed_pitch;
 		}
+		return [A,b,out_d_yaw,out_d_pitch,out_delta_yaw,out_delta_pitch];	
+	}
+	
+	// a problem is created with a set of constrained edges
+	solve(panorama,edges,nodes){
+		let H = 2.2;
+
+		let x = 0.0;
+		let y = 0.0;
+
+		let correct = transf.yawPitchToPos(panorama.panos[0],edges[0].target_yaw*180/Math.PI,edges[0].target_pitch*180/Math.PI);
+		console.log('target ',edges[0].target_yaw,edges[0].target_pitch);
+		console.log("current ",panorama.panos[115].translation);
+		console.log("correct ",correct);
 		
-		let szA = A.size();
-		let szb = b.size();
-		let A_pInv = math.pinv(A);
-		let szA_pInv = A_pInv.size();
+// SINGLE VALUE MINIMIZATION DEBUG
+/*		let alpha  = 10.0;		
+		for(let i=0; i < 1000; ++i){
+			let prob = this.setupProblem(panorama,edges,nodes); // per prendere il gradiente
+			let res = transf.posToYawPitch(panorama.panos[115].translation,panorama.panos[0]);
+
+	
+// minimizing yaw		
+//		        console.log('dyaw',prob[2][0],prob[2][1]);
+//			panorama.panos[115].translation [0]-= alpha* 2* prob[2][0] * (-prob[4]);
+// 			panorama.panos[115].translation [2]-= alpha* 2* prob[2][1] * (-prob[4]);
+
+//minimizing pitch
+
+ 		        console.log('dpitch',prob[3][0],prob[3][1]);
+ 			panorama.panos[115].translation [0]-= alpha* 2* prob[3][0] * (-prob[5]);
+ 			panorama.panos[115].translation [2]-= alpha* 2* prob[3][1] * (-prob[5]);
+
+			console.log('ite ',panorama.panos[115].translation);
+					
+					
+					
+			console.log("yawpitch ",res[0]*Math.PI/180,res[1]*Math.PI/180);	
+//			console.log('diff  ',prob[4]);
+			console.log('diff  ',prob[5]);
+		}		
+
+
+return;
+
 		
-		let x = math.multiply(A_pInv, b);
-		let b1 = math.subtract(math.multiply(A, x),b);
-		
-		let denseX = x.toArray();
-		let sz = x.size();
-		
-		for (let [i, n] of nodes.entries()) {
-   		  panorama.panos[n].translation[0] = x.get([i*2,0]);	// x pos of node n	
-   		  panorama.panos[n].translation[2] = x.get([i*2+1,0]);	// z pos of node n
-		}
-		
+*/		
+		let ie = 0;
+		let dense_x = [0,0]; 
+		for(let i=0; i < 10; ++i){
+			let prob = this.setupProblem(panorama,edges,nodes);
+			let A_pInv = math.pinv(prob[0]);
+			
+			console.log("IDE ",(math.multiply(A_pInv,prob[0])).toArray());
+			
+			let x = math.multiply(A_pInv, prob[1]);
+	 		dense_x = x.toArray();
+			console.log('curr sol:',dense_x[0],dense_x[1]);
+			for (let [i, n] of nodes.entries()) {
+	   		  panorama.panos[n].translation[0] = x.get([i*2,0]);		// x pos of node n	
+	   		  panorama.panos[n].translation[2] = x.get([i*2+1,0]);	// z pos of node n
+			}
+ 		}
 		
 	}
 	
 	optimize_positions(panorama,rootId){
-	 let edges_nodes = this.makeGraphFromRoot(panorama, rootId);
+	 let edges_nodes = this.makeGraphFromRoot(panorama, Number(rootId));
 	 this.solve(panorama,edges_nodes[0],edges_nodes[1]);
 	}
 

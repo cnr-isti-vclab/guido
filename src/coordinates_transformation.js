@@ -10,11 +10,9 @@
 		let y = pano.translation[1];
 		let z = pano.translation[2];	
 		
-		let dir = [tx - x, -H, tz - z, 1];
-		let len = Math.sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]);
-		dir[0]/=len;
-		dir[1]/=len;
-		dir[2]/=len;
+		let dir = [tx - x, -H, tz - z];
+		let dist = Math.sqrt(dir[0]*dir[0]+dir[2]*dir[2]);
+
 			
 		let angle = 180*Math.atan2(dir[0], dir[2])/Math.PI;
 		
@@ -23,9 +21,9 @@
 		yaw = ((yaw + 180)%360)-180;
 
 
-		let pitch = -180*Math.atan2(H, len)/Math.PI; 
+		let pitch = 180*Math.atan2(-H, dist)/Math.PI; 
 		
-		return [yaw,pitch,len];
+		return [yaw,pitch,dist];
 	}
 	
 	function yawPitchToDir(pano,yaw,pitch){
@@ -42,11 +40,11 @@
 	function yawPitchToPos(pano,yaw,pitch){
 		let dir = this.yawPitchToDir(pano,yaw,pitch);
 		let H = 2.2;
-		let t = Math.abs(H / dir[1]);
+		let t = Math.abs(-H / dir[1]);
 		
 		let pos = [0,0,0];
 		pos[0] = pano.translation[0]+t*dir[0];
-		pos[1] = 0;
+		pos[1] = pano.translation[1]+2.2+t*dir[1]; // this will be 0
 		pos[2] = pano.translation[2]+t*dir[2];
 		
 		return pos;

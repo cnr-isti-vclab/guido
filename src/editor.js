@@ -1,3 +1,4 @@
+import {Autopos} from './autopos.js'
 import  { applyMatrix}  from './math.js'
 import { Panorama } from './panorama.js'
 import { getIcon, getIcons, createElement, createSvgElement } from './utils.js'
@@ -29,11 +30,16 @@ class Editor {
 		this.initToolbar();
 
 		this.minimap = new MiniMap();
+		this.autopos = new Autopos(this.panorama);
 
 		document.addEventListener('keydown', (event) => {
 			if (event.keyCode != 32) return;
-
-			let id = this.panorama.viewer.getScene();			
+			let id = this.panorama.viewer.getScene();
+			this.autopos.optimize_positions(this.panorama,id);
+			
+				
+			
+/*			let id = this.panorama.viewer.getScene();			
 			let pano = this.panos.find(e => e.id == id);
 			if(!pano) return;
 
@@ -41,9 +47,10 @@ class Editor {
 			pano.pitch = this.panorama.viewer.getPitch();
 			pano.fov = this.panorama.viewer.getHfov();
 			this.save();
+*/
 		});
 		
-		// Define your f
+		 
 	}
 
 	posToYawPitch(pos, pano){
@@ -146,7 +153,7 @@ class Editor {
 					if( /* target.priority == 0 && d < long_range ||
 						target.priority == 1 && d < mid_range || */
 						d < short_range) {
- 						pano.links.push([target.id , yaw , pitch]);
+ 						pano.links.push([target.id , yaw , pitch,'projected']);
 					}	
 					
 					}
