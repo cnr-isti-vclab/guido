@@ -141,6 +141,7 @@ class TouristTour extends Tour {
 			return;
 
 		this.looking = true;
+		this.following = false;
 		document.querySelector('.tour-guide').classList.toggle('follow', false);
 		clearTimeout(this.followTimeout);
 		this.followTimeout = setTimeout(() => { this.looking = false; this.follow(); }, this.lookingIdle);

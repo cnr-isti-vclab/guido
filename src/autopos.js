@@ -176,9 +176,9 @@ visitedNodes.delete(rootIndex);
 		let x = 0.0;
 		let y = 0.0;
 
-		let correct = transf.yawPitchToPos(panorama.panos[0],edges[0].target_yaw*180/Math.PI,edges[0].target_pitch*180/Math.PI);
+		let correct = transf.yawPitchToPos(panorama.panos[edges[0].tail],edges[0].target_yaw*180/Math.PI,edges[0].target_pitch*180/Math.PI);
 		console.log('target ',edges[0].target_yaw,edges[0].target_pitch);
-		console.log("current ",panorama.panos[115].translation);
+		console.log("current ",panorama.panos[edges[0].tail].translation);
 		console.log("correct ",correct);
 		
 // SINGLE VALUE MINIMIZATION DEBUG
@@ -233,6 +233,7 @@ return;
 	}
 	
 	optimize_positions(panorama,rootId){
+	 console.clear();
 	 let edges_nodes = this.makeGraphFromRoot(panorama, Number(rootId));
 	 this.solve(panorama,edges_nodes[0],edges_nodes[1]);
 	}

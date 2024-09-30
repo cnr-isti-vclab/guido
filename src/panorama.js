@@ -5,6 +5,7 @@ import { getIcon, createSvgElement } from './utils.js'
 import { addSignals } from './signals.js'
 
 import * as module from './panzoom.js';
+import * as transf from './coordinates_transformation.js';
 
 let correct = false; //don't remember what this did.
 
@@ -231,6 +232,13 @@ class Panorama {
 							}
 							else{
 							    this.panorama.removeMovingTarget();
+	    						    this.panorama.emit('panoclicked');
+
+							    this.panorama.setPano(target.id); 
+
+							    e.preventDefault(); 
+							    e.stopPropagation(); 
+
 							}
 					}
 /*					clickHandlerFunc: (e) => { 
@@ -639,20 +647,47 @@ class Panorama {
 	}
 	
 	reassignTarget(target){
+		let targetId = target.sceneId;
 		let config  = this.viewer.getConfig();
 		let currentId = this.viewer.getScene(); // get the current id
 
 		// update the hotspot position in pannellum
-		let index = config.scenes[currentId].hotSpots.findIndex(e => e.sceneId == target.sceneId);
+		let index = config.scenes[currentId].hotSpots.findIndex(e => e.sceneId == targetId);
 		let curhs = config.scenes[currentId].hotSpots[index];
 		curhs.yaw = this.movingtargetspot.yaw;
 		curhs.pitch = this.movingtargetspot.pitch;
 		Object.assign(config.scenes[currentId].hotSpots[index], curhs);
 
+				
 		// update the link position
-		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == target.sceneId);
-		Object.assign(this.panos[currentId].links[indexpanos], [target.sceneId,curhs.yaw,curhs.pitch,'manual']);
+		let posTarget = transf.yawPitchToPos(this.panos[currentId],curhs.yaw,curhs.pitch);
+		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == targetId);
+		Object.assign(this.panos[currentId].links[indexpanos], [targetId,curhs.yaw,curhs.pitch,'manual']);
+		Object.assign(this.panos[targetId].translation, posTarget);
 		
+		// recompute polar coordinates w.r.t. neightbor nodes (where target projects on its neighbors and viceversa)
+		for(let [il,ng] of this.panos[targetId].links.entries())// for all links of the target (bidirectional edges assumed)
+			{
+			 let yp = transf.posToYawPitch(posTarget,this.panos[ng[0]]);
+			 let index_tp = this.panos[ng[0]].links.findIndex(e => e[0] == targetId);
+			 Object.assign(this.panos[ng[0]].links[index_tp], [targetId,yp[0],yp[1],'computed']);
+			 
+			 let index = config.scenes[ng[0]].hotSpots.findIndex(e => e.sceneId == targetId);
+			 Object.assign(config.scenes[ng[0]].hotSpots[index].yaw,yp[0]);
+			 Object.assign(config.scenes[ng[0]].hotSpots[index].pitch,yp[1]);
+			 
+			 yp = transf.posToYawPitch(this.panos[ng[0]].translation,this.panos[targetId]);
+			 Object.assign(this.panos[targetId].links[il], [ng[0],yp[0],yp[1],'computed']);
+			 
+			 index = config.scenes[targetId].hotSpots.findIndex(e => e.sceneId == ng[0]);
+			 
+			 let hs = config.scenes[targetId].hotSpots[index];
+			 hs.yaw = yp[0];
+			 hs.pitch = yp[1];
+			 Object.assign(config.scenes[targetId].hotSpots[index],hs);
+			}
+
+
 		this.movingtarget = null;
 		this.removeMovingTarget();
 	}
