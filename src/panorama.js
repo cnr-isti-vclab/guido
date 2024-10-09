@@ -162,6 +162,25 @@ class Panorama {
 			
 			let hotSpots = [];
 
+			hotSpots.push({
+					pitch: 30,
+					yaw: -pano.initialYaw,
+					type: "scene",
+					sceneId: -1,
+					panorama: this				
+				})
+			hotSpots.push({
+					pitch: 30,
+					yaw: 0,
+					type: "scene",
+					sceneId: -1,
+					panorama: this				
+				})
+				
+				
+				
+				
+				
 			if(pano.links)
 			for(let ti of pano.links) {
 				let target = this.panos.find(item => item.id === ti[0]);
@@ -191,7 +210,7 @@ class Panorama {
 
 
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-				let H = 2.2;
+				let H = 2;
 				let pitch = -180*Math.atan2(H, dist)/3.1415; 
 
 				if(target.priority == 0)
@@ -660,12 +679,20 @@ class Panorama {
 
 				
 		// update the link position
-		let posTarget = transf.yawPitchToPos(this.panos[currentId],curhs.yaw,curhs.pitch);
+		//let posTarget = transf.yawPitchToPos(this.panos[currentId],curhs.yaw,curhs.pitch);
 		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == targetId);
 		Object.assign(this.panos[currentId].links[indexpanos], [targetId,curhs.yaw,curhs.pitch,'manual']);
-		Object.assign(this.panos[targetId].translation, posTarget);
+		
+		
+		// the following code recomputes the link coordinates (yaw/pitch) of all the neighbors of the target node
+		// and those of the target node as a function of  its new position.
+		// It's a wild approximation
+
 		
 		// recompute polar coordinates w.r.t. neightbor nodes (where target projects on its neighbors and viceversa)
+	if(false)	
+	{
+		Object.assign(this.panos[targetId].translation, posTarget);
 		for(let [il,ng] of this.panos[targetId].links.entries())// for all links of the target (bidirectional edges assumed)
 			{
 			 let yp = transf.posToYawPitch(posTarget,this.panos[ng[0]]);
@@ -686,7 +713,7 @@ class Panorama {
 			 hs.pitch = yp[1];
 			 Object.assign(config.scenes[targetId].hotSpots[index],hs);
 			}
-
+	}
 
 		this.movingtarget = null;
 		this.removeMovingTarget();

@@ -291,6 +291,7 @@ window.guido_saveUrl = '<?=$saveurl?>';
 
 	</script>
 
+ 	<canvas id="graphview_canvas" width="1000" height="500" style="border: 2px solid black;"></canvas>  
 </body>
 </html>
 

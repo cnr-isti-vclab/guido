@@ -23,7 +23,7 @@ class Autopos {
 
 		// Mark this node as visited
 		visitedNodes.add(nodeIndex);
-		console.log(`Visiting node ${nodeIndex}`);
+		//console.log(`Visiting node ${nodeIndex}`);
 
 		// Get the current node's outgoing links
 		const currentNodeLinks = panorama.panos[nodeIndex].links;
@@ -32,7 +32,7 @@ class Autopos {
 		for (let link of currentNodeLinks) {
 		    let [index, yaw, pitch, how] = link; // Destructure the array, where 'how' is the last element
 		    if (how === 'manual') {
-		        console.log(`Following link from node ${nodeIndex} to node ${index}, yaw: ${yaw}, pitch: ${pitch}`);
+		       // console.log(`Following link from node ${nodeIndex} to node ${index}, yaw: ${yaw}, pitch: ${pitch}`);
 		        
 		        let [cyaw,cpitch,len ] = transf.posToYawPitch( panorama.panos[index].translation,panorama.panos[nodeIndex]);
 		        
@@ -62,10 +62,7 @@ class Autopos {
 
 	    // Start the DFS traversal from the root node
 	    dfs(rootIndex,0);
-
-// DEBUG
-visitedNodes.delete(rootIndex);
-//			
+			
 	    // Return the set of nodes and the list of visited edges
 	    return [ visitedEdges, [...visitedNodes] ];
 	}
@@ -73,11 +70,13 @@ visitedNodes.delete(rootIndex);
 
 	
 	setupProblem(panorama,edges,nodes){
-		let H = 2.2;
+		let H = 2;
 		let correct_result = [0,0,0];
 			
+
 		let N = nodes.length*2; // two variables (x,y) for each node
 		let M = edges.length*2; // two contraints for each edge
+		 
 		 
  //		console.log('initial pos');
  //		console.log(panorama.panos[nodes[0]].translation);
@@ -105,7 +104,7 @@ visitedNodes.delete(rootIndex);
 			inipos[i_xy*2+1] += pos[2];
 //			console.log('inipos',i_xy,pos[0],pos[2]);
 		}		
-		console.log('avg inipos');
+	//	console.log('avg inipos');
 		for(let [i, n] of nodes.entries()){
 			inipos[i*2] 	/= cnt[i];
 			inipos[i*2+1] /= cnt[i];
@@ -136,25 +135,24 @@ visitedNodes.delete(rootIndex);
 			e.computed_pitch 	= res[1];
 			
 			let a = dir[0]*dir[0]+dir[2]*dir[2];
-			let d_yaw =[- dir[0] / a,dir[2] / a];// derivative of atan2   on x,y
-			
-			console.log('dyaw',d_yaw);
-			
+			let d_yaw =[  dir[2] / a, -dir[0] / a];// derivative of atan2   on x,y
 			
 			let a_sr = Math.sqrt(a);
 			let c = H*H+a;
 			
-			// THIS DERIVATIVE IS WRONG!
-			console.log('dir',dir);
  			let d_pitch =[- (-H) *dir[0]/ (c*a_sr), - (-H)*dir[2] / (c*a_sr)];
-//			d_pitch = [ dir[0]/a, dir[2]/a]
 
-			console.log('dpitch',d_pitch);
+		//	console.log('dyaw',d_yaw,'dpitch',d_pitch);
 			
+			let t_yaw = e.target_yaw;
+			let sign = (t_yaw> e.computed_yaw )?-1:1;
+			if ( Math.abs(  t_yaw - e.computed_yaw ) > Math.PI ) 
+				t_yaw = t_yaw+ sign * 2*Math.PI;
+				 
 			
 			A.set([ie*2,i_xy  ],d_yaw[0]);
 			A.set([ie*2,i_xy+1],d_yaw[1]);
-			b.set([ie*2,0],e.target_yaw + ( d_yaw[0]*p_head[0]+d_yaw[1]*p_head[2]-e.computed_yaw));
+			b.set([ie*2,0],t_yaw + ( d_yaw[0]*p_head[0]+d_yaw[1]*p_head[2]-e.computed_yaw));
 			
 			A.set([ie*2+1,i_xy  ],d_pitch[0]);
 			A.set([ie*2+1,i_xy+1],d_pitch[1]);
@@ -170,74 +168,119 @@ visitedNodes.delete(rootIndex);
 	}
 	
 	// a problem is created with a set of constrained edges
-	solve(panorama,edges,nodes){
-		let H = 2.2;
+	solve(panorama,edges,nodesIn){
+		let H = 2;
 
 		let x = 0.0;
 		let y = 0.0;
 
 		let correct = transf.yawPitchToPos(panorama.panos[edges[0].tail],edges[0].target_yaw*180/Math.PI,edges[0].target_pitch*180/Math.PI);
-		console.log('target ',edges[0].target_yaw,edges[0].target_pitch);
-		console.log("current ",panorama.panos[edges[0].tail].translation);
-		console.log("correct ",correct);
+//		console.log('current yaw and pitch',edges[0].computed_yaw,edges[0].computed_pitch);
+//		console.log('target yaw and pitch',edges[0].target_yaw,edges[0].target_pitch);
+//		console.log("current position ",panorama.panos[edges[0].head].translation);
+//		console.log("correct position would be",correct);
 		
-// SINGLE VALUE MINIMIZATION DEBUG
-/*		let alpha  = 10.0;		
-		for(let i=0; i < 1000; ++i){
-			let prob = this.setupProblem(panorama,edges,nodes); // per prendere il gradiente
-			let res = transf.posToYawPitch(panorama.panos[115].translation,panorama.panos[0]);
-
-	
-// minimizing yaw		
-//		        console.log('dyaw',prob[2][0],prob[2][1]);
-//			panorama.panos[115].translation [0]-= alpha* 2* prob[2][0] * (-prob[4]);
-// 			panorama.panos[115].translation [2]-= alpha* 2* prob[2][1] * (-prob[4]);
-
-//minimizing pitch
-
- 		        console.log('dpitch',prob[3][0],prob[3][1]);
- 			panorama.panos[115].translation [0]-= alpha* 2* prob[3][0] * (-prob[5]);
- 			panorama.panos[115].translation [2]-= alpha* 2* prob[3][1] * (-prob[5]);
-
-			console.log('ite ',panorama.panos[115].translation);
-					
-					
-					
-			console.log("yawpitch ",res[0]*Math.PI/180,res[1]*Math.PI/180);	
-//			console.log('diff  ',prob[4]);
-			console.log('diff  ',prob[5]);
-		}		
-
-
-return;
-
-		
-*/		
+		// DEVEL (consider fixed the root node of the tree)
+		let nodes = [...nodesIn];
+		nodes.splice(0,1);
+		//
 		let ie = 0;
-		let dense_x = [0,0]; 
-		for(let i=0; i < 10; ++i){
+		let dense_x = [0,0];
+		let max_ite = 50; 
+		
+		let max_delta = 100;
+//		for(let i=0; i < n_ite; ++i)
+
+		console.log('---------------');
+		let i=0;
+		 while( (i< max_ite) && (max_delta>1.0))
+		{
+			max_delta = 0;
+			i++;
 			let prob = this.setupProblem(panorama,edges,nodes);
 			let A_pInv = math.pinv(prob[0]);
 			
-			console.log("IDE ",(math.multiply(A_pInv,prob[0])).toArray());
-			
 			let x = math.multiply(A_pInv, prob[1]);
 	 		dense_x = x.toArray();
-			console.log('curr sol:',dense_x[0],dense_x[1]);
+//			console.log('sol:',dense_x[0],dense_x[1]);
+			let err = math.multiply(prob[0],x);
+			err = math.subtract(err,prob[1]);
+			
 			for (let [i, n] of nodes.entries()) {
-	   		  panorama.panos[n].translation[0] = x.get([i*2,0]);		// x pos of node n	
-	   		  panorama.panos[n].translation[2] = x.get([i*2+1,0]);	// z pos of node n
+			
+
+				let delta = [ x.get([i*2,0])-panorama.panos[n].translation[0] , x.get([i*2+1,0])-panorama.panos[n].translation[2]];
+				let deltalength = Math.sqrt(delta[0]*delta[0] + delta[1]*delta[1]);
+				
+				// error
+				console.log("pano ",n,"y ",err.get([i*2,0])*err.get([i*2,0]),"p ",err.get([i*2+1,0])*err.get([i*2+1,0]));
+
+
+				if(deltalength>max_delta)
+					max_delta = deltalength;
+				
+				if( deltalength > 1.0 ){
+					delta[0] /=  deltalength;
+					delta[1] /=  deltalength;
+				}
+
+
+		   		  panorama.panos[n].translation[0] += delta[0];	// x pos of node n	
+		   		  panorama.panos[n].translation[2] += delta[1];	// z pos of node n
 			}
  		}
 		
 	}
 	
 	optimize_positions(panorama,rootId){
-	 console.clear();
+//	 console.clear();
 	 let edges_nodes = this.makeGraphFromRoot(panorama, Number(rootId));
 	 this.solve(panorama,edges_nodes[0],edges_nodes[1]);
+	 this.computeLinks(panorama,edges_nodes[1]);
 	}
 
+	computeLinks(panorama,panosToUpdate){
+		let config  = panorama.viewer.getConfig();
+		let panos = panorama.panos;
+		
+		for(let i of panosToUpdate){
+			let targetId = panos[i].id;
+			console.log('pano to update',targetId);
+			for(let [il,ng] of panos[targetId].links.entries())// for all links of the target (bidirectional edges assumed)
+				{
+				 let yp = transf.posToYawPitch(panos[targetId].translation, panos[ng[0]]);
+				 let index_tp =  panos[ng[0]].links.findIndex(e => e[0] == targetId);
+				 if(index_tp == -1)
+				 continue;
+				 
+				 Object.assign( panos[ng[0]].links[index_tp], [targetId,yp[0],yp[1],'computed']);
+				 console.log('pano ',targetId, ' to ', ng[0],':', yp[0],yp[1]);
+
+
+				 
+				 let index = config.scenes[ng[0]].hotSpots.findIndex(e => e.sceneId == targetId);
+				 config.scenes[ng[0]].hotSpots[index].yaw  = yp[0];
+				 config.scenes[ng[0]].hotSpots[index].pitch= yp[1];
+				 
+//				 Object.assign(config.scenes[ng[0]].hotSpots[index].yaw,yp[0]);
+//				 Object.assign(config.scenes[ng[0]].hotSpots[index].pitch,yp[1]);
+				 
+
+/*				 console.log('pano ',ng[0], ' to ', targetId );
+			 
+				 yp = transf.posToYawPitch( panos[ng[0]].translation, panos[targetId]);
+				 Object.assign( panos[targetId].links[il], [ng[0],yp[0],yp[1],'computed']);
+				 
+				 index = config.scenes[targetId].hotSpots.findIndex(e => e.sceneId == ng[0]);
+				 
+				 let hs = config.scenes[targetId].hotSpots[index];
+				 hs.yaw = yp[0];
+				 hs.pitch = yp[1];
+				 Object.assign(config.scenes[targetId].hotSpots[index],hs);
+*/
+				}
+		}
+	}			
 }
 
 export {Autopos}

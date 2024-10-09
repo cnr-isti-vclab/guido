@@ -46,8 +46,11 @@ class Editor {
 				let id = this.panorama.viewer.getScene();
 				this.autopos.optimize_positions(this.panorama,id);
 			}
-				
-			
+ 			if (event.key == "m"){
+ 			
+ 				this.drawGraph();
+			}
+
 /*			let id = this.panorama.viewer.getScene();			
 			let pano = this.panos.find(e => e.id == id);
 			if(!pano) return;
@@ -60,6 +63,104 @@ class Editor {
 		});
 		
 		 
+	}
+
+
+	drawGraph(){
+		// Get the canvas element by its ID
+		let canvas = document.getElementById('graphview_canvas');
+
+		// Get the 2D drawing context
+		let ctx = canvas.getContext('2d');
+		const rect = canvas.getBoundingClientRect();	
+		
+		let mt = ctx.getTransform();
+		if(mt.a == 1 && mt.d == 1 )
+		{
+		
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		// get the bounding box of the scene
+		// HERE ASSUMING ONLY ONE SET
+		let bbox =[0,0,0,0];
+		bbox[0] = this.panorama.panos[0].translation[0];
+		bbox[2] = this.panorama.panos[0].translation[0];
+		bbox[1] = this.panorama.panos[0].translation[2];
+		bbox[3] = this.panorama.panos[0].translation[2];
+		for(let pano of this.panorama.panos) 
+			for(let i of [0,1])
+				if(pano.translation[i*2] <bbox[i] )
+					bbox[i] = pano.translation[i*2];
+					else
+					if(pano.translation[i*2] > bbox[i+2] )
+						bbox[i+2] = pano.translation[i*2];
+		
+		// viewing window on the data (slightly enlarge the bbox)
+		let view = [ 	bbox[0]-(bbox[2]-bbox[0])*0.05,bbox[1]-(bbox[3]-bbox[1])*0.05,
+				bbox[2]+(bbox[2]-bbox[0])*0.05,bbox[3]+(bbox[3]-bbox[1])*0.05
+				];
+		
+		
+		// set the vieport vp to to maximize the size in the available canvas
+		const vp = [0,0,rect.right-rect.left,rect.bottom-rect.top];
+		let szView 	=  [(view[2]-view[0]),(view[3]-view[1])];		
+		const szVp 	=  [(vp[2]-vp[0]),(vp[3]-vp[1])];		
+
+		
+		let kw=1.0;
+		let kh=1.0;
+   		if( szView[1]/szView[0] > szVp[1]/szVp[0] ) 
+			kw = szView[0]/szView[1]*szVp[1]/szVp[0];
+		else 		
+		  	kh = szView[1]/szView[0]*szVp[0]/szVp[1];	
+  	
+		vp[2] = szVp[0]*kw;
+		vp[3] = szVp[1]*kh;
+
+
+		// define the viewport transformation
+		const ratioX =  ( vp[2]-vp[0] ) / (view[2]-view[0]);
+		const ratioY = ( vp[3]-vp[1] ) / (view[3]-view[1]);
+
+		ctx.setTransform(ratioX,0,0,-ratioY,-ratioX*view[0]+vp[0], ratioY*view[1]-vp[1] + (rect.bottom-rect.top));
+		
+		ctx.fillStyle = "blue"; // Set fill color
+		
+		console.log("transf ",ctx.getTransform());
+		}
+		else{
+			ctx.setTransform(1,0,0,1,0,0);
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.setTransform(mt);
+		}
+		
+		let id = this.panorama.viewer.getScene();
+		for(let pano of this.panorama.panos){
+				ctx.beginPath();
+				ctx.fillStyle = "green"; // Set fill color
+	 			ctx.arc(pano.translation[0], pano.translation[2], 2, 0, 2*Math.PI, false);
+				if(pano.id != id)
+		 			ctx.stroke();
+	 			else
+		 			ctx.fill();
+		 			
+		 		// show the north direction
+		 		ctx.beginPath();
+		 		let pos = transf.yawPitchToPos(pano,-pano.initialYaw,-30);
+		 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
+        			ctx.lineTo(pos[0], pos[2]); 
+        			ctx.strokeStyle = "red"; // Set fill color
+		 		ctx.stroke();
+		 		
+		 		ctx.beginPath();
+		 		// show the initialYaw
+		 		pos = transf.yawPitchToPos(pano,0,-10);
+		 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
+        			ctx.lineTo(pos[0], pos[2]); 
+        			ctx.strokeStyle = "blue"; // Set fill color
+		 		ctx.stroke();
+
+			}
 	}
 
 	createGraph(){
