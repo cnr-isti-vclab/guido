@@ -1,7 +1,7 @@
 
  
 	function posToYawPitch(pos, pano){
-		let H = 2.2;
+		let H = 2;
 		let tx = pos[0];
 		let ty = pos[1];
 		let tz = pos[2];
@@ -39,12 +39,12 @@
 
 	function yawPitchToPos(pano,yaw,pitch){
 		let dir = this.yawPitchToDir(pano,yaw,pitch);
-		let H = 2.2;
+		let H = 2;
 		let t = Math.abs(-H / dir[1]);
 		
 		let pos = [0,0,0];
 		pos[0] = pano.translation[0]+t*dir[0];
-		pos[1] = pano.translation[1]+2.2+t*dir[1]; // this will be 0
+		pos[1] = pano.translation[1]+H+t*dir[1]; // this will be 0
 		pos[2] = pano.translation[2]+t*dir[2];
 		
 		return pos;
@@ -55,7 +55,7 @@
 	function yawPitchTargetToPos(pano,targetpano,yaw,pitch){
 		let dir = this.yawPitchToDir(pano,yaw,pitch);
 		
-		let H = 2.2;
+		let H = 2;
 		let t = Math.abs(H / dir[1]);
 		
 		let pos = [0,0,0];

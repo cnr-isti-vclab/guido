@@ -681,39 +681,8 @@ class Panorama {
 		// update the link position
 		//let posTarget = transf.yawPitchToPos(this.panos[currentId],curhs.yaw,curhs.pitch);
 		let indexpanos = this.panos[currentId].links.findIndex(e => e[0] == targetId);
-		Object.assign(this.panos[currentId].links[indexpanos], [targetId,curhs.yaw,curhs.pitch,'manual']);
-		
-		
-		// the following code recomputes the link coordinates (yaw/pitch) of all the neighbors of the target node
-		// and those of the target node as a function of  its new position.
-		// It's a wild approximation
+		Object.assign(this.panos[currentId].links[indexpanos], [targetId,curhs.yaw,curhs.pitch,'manual']);		
 
-		
-		// recompute polar coordinates w.r.t. neightbor nodes (where target projects on its neighbors and viceversa)
-	if(false)	
-	{
-		Object.assign(this.panos[targetId].translation, posTarget);
-		for(let [il,ng] of this.panos[targetId].links.entries())// for all links of the target (bidirectional edges assumed)
-			{
-			 let yp = transf.posToYawPitch(posTarget,this.panos[ng[0]]);
-			 let index_tp = this.panos[ng[0]].links.findIndex(e => e[0] == targetId);
-			 Object.assign(this.panos[ng[0]].links[index_tp], [targetId,yp[0],yp[1],'computed']);
-			 
-			 let index = config.scenes[ng[0]].hotSpots.findIndex(e => e.sceneId == targetId);
-			 Object.assign(config.scenes[ng[0]].hotSpots[index].yaw,yp[0]);
-			 Object.assign(config.scenes[ng[0]].hotSpots[index].pitch,yp[1]);
-			 
-			 yp = transf.posToYawPitch(this.panos[ng[0]].translation,this.panos[targetId]);
-			 Object.assign(this.panos[targetId].links[il], [ng[0],yp[0],yp[1],'computed']);
-			 
-			 index = config.scenes[targetId].hotSpots.findIndex(e => e.sceneId == ng[0]);
-			 
-			 let hs = config.scenes[targetId].hotSpots[index];
-			 hs.yaw = yp[0];
-			 hs.pitch = yp[1];
-			 Object.assign(config.scenes[targetId].hotSpots[index],hs);
-			}
-	}
 
 		this.movingtarget = null;
 		this.removeMovingTarget();

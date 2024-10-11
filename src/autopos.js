@@ -1,6 +1,7 @@
 import { create, all,matrix } from 'mathjs'
 import { applyMatrix}  from './math.js'
 import { Panorama } from './panorama.js'
+import { addSignals } from './signals.js'
 
 import * as transf from './coordinates_transformation.js';
 
@@ -120,7 +121,9 @@ class Autopos {
 		for(let [ie, e] of edges.entries()){
 		
 			// find the place of edges.head in nodes
-			let i_xy = nodes.indexOf(e.head)*2;			
+			let i_xy = nodes.indexOf(e.head)*2;
+			let t_xy = nodes.indexOf(e.tail)*2;
+						
 			
 			let p_head = [inipos[i_xy],0,inipos[i_xy+1]];
 			let p_tail = panorama.panos[e.tail].translation;
@@ -152,7 +155,14 @@ class Autopos {
 			
 			A.set([ie*2,i_xy  ],d_yaw[0]);
 			A.set([ie*2,i_xy+1],d_yaw[1]);
-			b.set([ie*2,0],t_yaw + ( d_yaw[0]*p_head[0]+d_yaw[1]*p_head[2]-e.computed_yaw));
+			
+			if(t_xy > 0){ // the tail node is   among the variables
+				A.set([ie*2,t_xy  ],-d_yaw[0]);
+				A.set([ie*2,t_xy+1],-d_yaw[1]);
+				b.set([ie*2,0],t_yaw + ( d_yaw[0]*p_head[0]+d_yaw[1]*p_head[2]+(-d_yaw[0])*p_tail[0]+(-d_yaw[1])*p_tail[2]-e.computed_yaw));
+				}else{
+				b.set([ie*2,0],t_yaw + ( d_yaw[0]*p_head[0]+d_yaw[1]*p_head[2]-e.computed_yaw));
+				}
 			
 			A.set([ie*2+1,i_xy  ],d_pitch[0]);
 			A.set([ie*2+1,i_xy+1],d_pitch[1]);
@@ -182,7 +192,7 @@ class Autopos {
 		
 		// DEVEL (consider fixed the root node of the tree)
 		let nodes = [...nodesIn];
-		nodes.splice(0,1);
+ 		 nodes.splice(0,1);
 		//
 		let ie = 0;
 		let dense_x = [0,0];
@@ -242,7 +252,7 @@ class Autopos {
 	computeLinks(panorama,panosToUpdate){
 		let config  = panorama.viewer.getConfig();
 		let panos = panorama.panos;
-		
+			
 		for(let i of panosToUpdate){
 			let targetId = panos[i].id;
 			console.log('pano to update',targetId);
@@ -253,35 +263,31 @@ class Autopos {
 				 if(index_tp == -1)
 				 continue;
 				 
-				 Object.assign( panos[ng[0]].links[index_tp], [targetId,yp[0],yp[1],'computed']);
+				 Object.assign( panos[ng[0]].links[index_tp], [targetId,yp[0],yp[1],'projected']);
 				 console.log('pano ',targetId, ' to ', ng[0],':', yp[0],yp[1]);
-
-
 				 
 				 let index = config.scenes[ng[0]].hotSpots.findIndex(e => e.sceneId == targetId);
 				 config.scenes[ng[0]].hotSpots[index].yaw  = yp[0];
 				 config.scenes[ng[0]].hotSpots[index].pitch= yp[1];
 				 
-//				 Object.assign(config.scenes[ng[0]].hotSpots[index].yaw,yp[0]);
-//				 Object.assign(config.scenes[ng[0]].hotSpots[index].pitch,yp[1]);
-				 
-
-/*				 console.log('pano ',ng[0], ' to ', targetId );
+  				 console.log('pano ',ng[0], ' to ', targetId );
 			 
 				 yp = transf.posToYawPitch( panos[ng[0]].translation, panos[targetId]);
-				 Object.assign( panos[targetId].links[il], [ng[0],yp[0],yp[1],'computed']);
+				 Object.assign( panos[targetId].links[il], [ng[0],yp[0],yp[1],'projected']);
 				 
 				 index = config.scenes[targetId].hotSpots.findIndex(e => e.sceneId == ng[0]);
 				 
-				 let hs = config.scenes[targetId].hotSpots[index];
-				 hs.yaw = yp[0];
-				 hs.pitch = yp[1];
-				 Object.assign(config.scenes[targetId].hotSpots[index],hs);
-*/
+				 config.scenes[targetId].hotSpots[index].yaw   = yp[0];
+				 config.scenes[targetId].hotSpots[index].pitch = yp[1];
+				 
 				}
 		}
+		this.emit('updategraph');
 	}			
 }
+addSignals(Autopos, 
+	'updategraph');
 
+export { Panorama }
 export {Autopos}
 

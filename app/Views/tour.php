@@ -257,6 +257,7 @@
           <div id="overlayImageContainer">
           <div id="overlayImageWrapper">
           <img id="overlayImage" src="" alt="Overlay Image">
+          <A href="http://vcg.isti.cnr.it"> http://vcg.isti.cnr.it </A>
           </div>
           <span class="closeButton">Close</span>
           </div>

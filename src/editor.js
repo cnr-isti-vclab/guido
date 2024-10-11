@@ -19,38 +19,57 @@ class Editor {
 		//this.panorama.addEvent('wheelevent',  (e) => this.wheelEvent(e));
 
 		//this.panorama.addEvent('viewchange',   (e) => this.viewChange(e));
-		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
+		this.panorama.addEvent('scenechange', (id) => {this.sceneChange(id);this.drawGraph();});
 		//this.panorama.addEvent('panoclicked', (id) => this.panoClicked(id));
 		this.panorama.addEvent('movetarget_on', (coords) => this.panorama.moveMovingTarget(coords));
 
-		this.panorama.addEvent('reassign_target_position', (targettoreassign) => this.panorama.reassignTarget(targettoreassign));
+		this.panorama.addEvent('reassign_target_position', (targettoreassign) => {this.panorama.reassignTarget(targettoreassign);this.drawGraph();});
 
 		this.panorama.editor = true;
 
 		document.querySelector('#tour-initial').style.display = 'none';
 		this.initToolbar();
 
-		this.minimap = new MiniMap();
+	 	this.minimap = new MiniMap();
 		this.autopos = new Autopos(this.panorama);
+		this.autopos.addEvent('updategraph',() => this.drawGraph());
+		
 
+ 
 		this.previousScenes = [0];
-		
+
+		this.showArcs = false;
+		this.showYaw  = false;
+				
 		document.addEventListener('keydown', (event) => {
-		
-			if (event.key == "p"){
-			if(this.previousScenes.length>1)
-				this.previousScenes = this.previousScenes.splice(0,this.previousScenes.length-1);
+				
+			switch(event.key){	
+			case 'p':
+				if(this.previousScenes.length>1)
+					this.previousScenes = this.previousScenes.splice(0,this.previousScenes.length-1);
 				this.panorama.setPano(this.previousScenes[this.previousScenes.length-1]);
-				}
-			if (event.key == "o"){
+				break;	
+			case 'o': 
 				let id = this.panorama.viewer.getScene();
 				this.autopos.optimize_positions(this.panorama,id);
-			}
- 			if (event.key == "m"){
- 			
+				break;
+ 			case 'g':
  				this.drawGraph();
+ 				break;
+ 			case 'a':
+ 				this.showArcs = !this.showArcs;
+ 				this.drawGraph();
+ 				break;
+ 			case 'd':
+ 				this.showYaw = !this.showYaw;
+ 				this.drawGraph();
+ 				break;
+ 			case 'r':
+ 				let allpanos = Array.from({ length: 126 }, (v, i) => i);
+ 				this.autopos.computeLinks(this.panorama,allpanos);
+ 				this.drawGraph();
+ 				break;
 			}
-
 /*			let id = this.panorama.viewer.getScene();			
 			let pano = this.panos.find(e => e.id == id);
 			if(!pano) return;
@@ -65,6 +84,26 @@ class Editor {
 		 
 	}
 
+
+	drawArrow(ctx,x1, y1, x2, y2) {
+	    const headLength = 3; // Length of the arrowhead
+
+	    const angle = Math.atan2(y2 - y1, x2 - x1); // Calculate the angle of the line
+
+	    // Draw the line (shaft of the arrow)
+	    ctx.beginPath();
+	    ctx.moveTo(x1, y1);
+	    ctx.lineTo(x2, y2);
+	    ctx.stroke();
+
+	    // Draw the arrowhead (two lines forming a V shape)
+	    ctx.beginPath();
+	    ctx.moveTo(x2, y2);
+	    ctx.lineTo(x2 - headLength * Math.cos(angle - Math.PI / 6), y2 - headLength * Math.sin(angle - Math.PI / 6));
+	    ctx.moveTo(x2, y2);
+	    ctx.lineTo(x2 - headLength * Math.cos(angle + Math.PI / 6), y2 - headLength * Math.sin(angle + Math.PI / 6));
+	    ctx.stroke();
+	}
 
 	drawGraph(){
 		// Get the canvas element by its ID
@@ -119,12 +158,13 @@ class Editor {
 
 
 		// define the viewport transformation
-		const ratioX =  ( vp[2]-vp[0] ) / (view[2]-view[0]);
-		const ratioY = ( vp[3]-vp[1] ) / (view[3]-view[1]);
+		let ratioX =  ( vp[2]-vp[0] ) / (view[2]-view[0]);
+		let ratioY = ( vp[3]-vp[1] ) / (view[3]-view[1]);
 
 		ctx.setTransform(ratioX,0,0,-ratioY,-ratioX*view[0]+vp[0], ratioY*view[1]-vp[1] + (rect.bottom-rect.top));
 		
 		ctx.fillStyle = "blue"; // Set fill color
+		ctx.strokeStyle = "blue"; // Set fill color
 		
 		console.log("transf ",ctx.getTransform());
 		}
@@ -145,21 +185,54 @@ class Editor {
 		 			ctx.fill();
 		 			
 		 		// show the north direction
-		 		ctx.beginPath();
+/*		 		ctx.beginPath();
 		 		let pos = transf.yawPitchToPos(pano,-pano.initialYaw,-30);
 		 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
         			ctx.lineTo(pos[0], pos[2]); 
         			ctx.strokeStyle = "red"; // Set fill color
 		 		ctx.stroke();
+*/
+				if(this.showYaw){		 		
+			 		ctx.beginPath();
+			 		// show the initialYaw
+			 		let pos = transf.yawPitchToPos(pano,0,-10);
+			 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
+					ctx.lineTo(pos[0], pos[2]); 
+					ctx.strokeStyle = "blue"; // Set fill color
+			 		ctx.stroke();
+				}
+/*				if(pano.id == id)
+				for(let [i,ng] of pano.links.entries())
+				{
+			 		ctx.beginPath();
+			 		let pos = this.panorama.panos[ng[0]].translation;
+			 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
+					ctx.lineTo(pos[0], pos[2]); 
+					ctx.strokeStyle = "blue"; // Set fill color
+			 		ctx.stroke();
+		 		}
 		 		
-		 		ctx.beginPath();
-		 		// show the initialYaw
-		 		pos = transf.yawPitchToPos(pano,0,-10);
-		 		ctx.moveTo(pano.translation[0], pano.translation[2]);  // Move the drawing cursor to the starting point
-        			ctx.lineTo(pos[0], pos[2]); 
-        			ctx.strokeStyle = "blue"; // Set fill color
-		 		ctx.stroke();
-
+*/
+ 				let tail = [...pano.translation];				
+				for(let [i,ng] of pano.links.entries())
+				 if(ng[3]=='manual')
+				{	
+			 		ctx.beginPath();
+			 		let head = [...this.panorama.panos[ng[0]].translation];
+			 		
+			 		let d = [tail[0]-pos[0],tail[2]-pos[2]];
+			 		let l = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+			 		d[0] = d[0] / l;
+			 		d[1] = d[1] / l;
+			  		tail[0] = tail[0]-d[0]*2;
+			  		tail[2] = tail[2]-d[1]*2;
+			 		
+			  		head[0] = head[0]+d[0]*2;
+			  		head[2] = head[2]+d[1]*2;
+			 		
+			 		this.drawArrow(ctx,tail[0], tail[2],head[0], head[2]);
+		 		}
+ 
 			}
 	}
 
