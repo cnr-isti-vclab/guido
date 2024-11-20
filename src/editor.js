@@ -49,6 +49,12 @@ class Editor {
 					this.previousScenes = this.previousScenes.splice(0,this.previousScenes.length-1);
 				this.panorama.setPano(this.previousScenes[this.previousScenes.length-1]);
 				break;	
+			case 'y': 
+				this.autopos.useYaw = true;
+				break;
+			case 'i': 
+				this.autopos.useYaw = false;
+				break;
 			case 'o': 
 				let id = this.panorama.viewer.getScene();
 				this.autopos.optimize_positions(this.panorama,id);
@@ -213,25 +219,26 @@ class Editor {
 		 		}
 		 		
 */
- 				let tail = [...pano.translation];				
-				for(let [i,ng] of pano.links.entries())
-				 if(ng[3]=='manual')
-				{	
-			 		ctx.beginPath();
-			 		let head = [...this.panorama.panos[ng[0]].translation];
-			 		
-			 		let d = [tail[0]-pos[0],tail[2]-pos[2]];
-			 		let l = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
-			 		d[0] = d[0] / l;
-			 		d[1] = d[1] / l;
-			  		tail[0] = tail[0]-d[0]*2;
-			  		tail[2] = tail[2]-d[1]*2;
-			 		
-			  		head[0] = head[0]+d[0]*2;
-			  		head[2] = head[2]+d[1]*2;
-			 		
-			 		this.drawArrow(ctx,tail[0], tail[2],head[0], head[2]);
-		 		}
+                let tail = [...pano.translation];
+                if( pano.links !=  undefined )
+                    for(let [i,ng] of pano.links.entries())
+                     if(ng[3]=='manual')
+                    {
+                        ctx.beginPath();
+                        let head = [...this.panorama.panos[ng[0]].translation];
+
+                        let d = [tail[0]-head[0],tail[2]-head[2]];
+                        let l = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+                        d[0] = d[0] / l;
+                        d[1] = d[1] / l;
+                        tail[0] = tail[0]-d[0]*2;
+                        tail[2] = tail[2]-d[1]*2;
+
+                        head[0] = head[0]+d[0]*2;
+                        head[2] = head[2]+d[1]*2;
+
+                        this.drawArrow(ctx,tail[0], tail[2],head[0], head[2]);
+                    }
  
 			}
 	}
@@ -268,7 +275,7 @@ class Editor {
 					if( /* target.priority == 0 && d < long_range ||
 						target.priority == 1 && d < mid_range || */
 						d < short_range) {
- 						pano.links.push([target.id , yaw , pitch,'projected']);
+                        pano.links.push([target.id , yaw , pitch,'projected']);
 					}	
 					
 					}
@@ -284,7 +291,7 @@ class Editor {
 	}
 	
 	save() {
-		this.createGraph();
+        this.createGraph();
 		this.minimap.saveDataset();
 	}
 

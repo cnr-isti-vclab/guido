@@ -37,10 +37,10 @@
                     left: 50%;
                     transform: translate(-50%, -50%);
                     z-index: 0;
-                    background-color: rgba(0, 0, 0, 0.8);
+                    background-color: rgba(0.8, 0.8, 0.8, 0.8);
                     padding: 20px;
                     border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+                    box-shadow: 0 0 10px rgba(0.8, 0.8, 0.8, 0.3);
                 }
                 #overlayImage {
                     max-width: 100%;
