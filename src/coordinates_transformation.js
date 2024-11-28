@@ -27,7 +27,7 @@
 	}
 	
 	function yawPitchToDir(pano,yaw,pitch){
-		yaw = (yaw + 360)%360; 			// bring yaw from -180,180 to 0-360
+        yaw = (yaw + 360)%360;                  // bring yaw from -180,180 to 0-360
 		yaw = (yaw+pano.initialYaw+360)%360;	// add pano.initialYaw
 		
 		let dir = [0,0,0];
@@ -65,6 +65,19 @@
 		
 		return pos;
 	}
+
+    function pixelToYawPitchPnlm(px,py,w,h){
+        let yaw   = (px-w/2.0)/(w/2)*180;
+        let pitch = ((h-py)-h/2.0)/(h/2)*90;
+        return [yaw,pitch];
+    }
 	
-	export {posToYawPitch,yawPitchToDir,yawPitchToPos,yawPitchTargetToPos}
+    function pixelCubeToYawPitchPnlm(px,py,w,h){
+        let half_fw = w/8;
+        let yaw   = (px+half_fw-w/2.0)/(w/2)*180;
+        yaw = ((yaw + 180)%360)-180;
+        let pitch = ((h-py)-h/2.0)/(h/2)*45;
+        return [yaw,pitch];
+    }
+    export {posToYawPitch,yawPitchToDir,yawPitchToPos,yawPitchTargetToPos,pixelToYawPitchPnlm,pixelCubeToYawPitchPnlm}
 	

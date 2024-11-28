@@ -81,7 +81,7 @@
 </head>
 
 <body>
-	
+        <script src="https://nb-ganovelli.isti.cnr.it/js/tracking-min.js"></script>
 	<!-- <div id="tour-initial">
 		Name: <input type="text" name="name" id="username"><br/>
 		<input type="button" id="enter" value="Enter"/>

@@ -1,10 +1,10 @@
 import {Autopos} from './autopos.js'
+import {PositionEstimation,math} from './autopos.js'
 import  { applyMatrix}  from './math.js'
 import { Panorama } from './panorama.js'
 import { getIcon, getIcons, createElement, createSvgElement } from './utils.js'
 import MiniMap from './minimap.js';
 import * as transf from './coordinates_transformation.js';
-
 class Editor {
 
 	constructor(container, panourl) {
@@ -38,9 +38,13 @@ class Editor {
  
 		this.previousScenes = [0];
 
-		this.showArcs = false;
+        this.showArcs = true;
 		this.showYaw  = false;
-				
+        this.ce_D = {id0:0,id1:0,v:[0,0,0]};
+        this.id0 = -1;
+        this.id1 = -1;
+        this.pe = null;
+        this.inputTwoNumbers();
 		document.addEventListener('keydown', (event) => {
 				
 			switch(event.key){	
@@ -75,7 +79,13 @@ class Editor {
  				this.autopos.computeLinks(this.panorama,allpanos);
  				this.drawGraph();
  				break;
-			}
+            case 'e':
+                this.estimateCameraPosition();
+                break;
+            case 'w':
+                this.estimateCameraPositionEqui();
+                break;
+            }
 /*			let id = this.panorama.viewer.getScene();			
 			let pano = this.panos.find(e => e.id == id);
 			if(!pano) return;
@@ -91,6 +101,75 @@ class Editor {
 	}
 
 
+    inputTwoNumbers(){
+        // Create the container for the widget
+        const container = document.createElement('div');
+        container.style.fontFamily = 'Arial, sans-serif';
+        container.style.margin = '20px';
+
+        // Add a title
+        const title = document.createElement('h3');
+        title.innerText = 'Enter Two Integers:';
+        container.appendChild(title);
+
+        // Create input fields for integers
+        const input1 = document.createElement('input');
+        input1.type = 'number';
+        input1.step = '1'; // Restrict to integers
+        input1.placeholder = 'Enter first integer';
+        input1.style.marginRight = '10px';
+
+        const input2 = document.createElement('input');
+        input2.type = 'number';
+        input2.step = '1'; // Restrict to integers
+        input2.placeholder = 'Enter second integer';
+
+        // Create a button to confirm inputs
+        const button = document.createElement('button');
+        button.innerText = 'Submit';
+        button.style.marginLeft = '10px';
+
+        // Append inputs and button to the container
+        container.appendChild(input1);
+        container.appendChild(input2);
+        container.appendChild(button);
+
+        // Add the container to the body
+        document.body.appendChild(container);
+
+        // Add functionality to capture inputs and remove the widget
+        button.addEventListener('click', () => {
+          const num1 = parseInt(input1.value, 10) || 0;
+          const num2 = parseInt(input2.value, 10) || 0;
+
+          // Return the numbers (for this example, log them in the console)
+          this.id0 = num1;
+          this.id1 = num2;
+
+          // Remove the widget
+         // container.remove();
+        });
+    }
+
+
+
+
+    async estimateCameraPosition(){
+
+        this.pe = new PositionEstimation();
+        let matches = await this.pe.findCorrespondences(this.panorama,this.id0,this.id1);
+        this.ce_D.v = this.pe.estimateCameraPositionFromCorrespondences(this.panorama.panos[this.id0],this.panorama.panos[this.id1],matches,true);
+        this.ce_D.id0 = this.id0;
+        this.ce_D.id1 = this.id1;
+    }
+    async estimateCameraPositionEqui(){
+
+        this.pe = new PositionEstimation();
+        let matches = await this.pe.findCorrespondencesEqui(this.panorama,this.id0,this.id1);
+        this.ce_D.v = this.pe.estimateCameraPositionFromCorrespondences(this.panorama.panos[this.id0],this.panorama.panos[this.id1],matches,false);
+        this.ce_D.id0 = this.id0;
+        this.ce_D.id1 = this.id1;
+    }
 	drawArrow(ctx,x1, y1, x2, y2) {
 	    const headLength = 3; // Length of the arrowhead
 
@@ -181,6 +260,7 @@ class Editor {
 		}
 		
 		let id = this.panorama.viewer.getScene();
+
 		for(let pano of this.panorama.panos){
 				ctx.beginPath();
 				ctx.fillStyle = "green"; // Set fill color
@@ -220,7 +300,7 @@ class Editor {
 		 		
 */
                 let tail = [...pano.translation];
-                if( pano.links !=  undefined )
+                if( pano.links !=  undefined &&this.showArcs)
                     for(let [i,ng] of pano.links.entries())
                      if(ng[3]=='manual')
                     {
@@ -241,7 +321,25 @@ class Editor {
                     }
  
 			}
-	}
+
+        if(this.ce_D.id0!=this.ce_D.id1){
+                let t = this.panorama.panos[this.ce_D.id0].translation;
+                let h = this.panorama.panos[this.ce_D.id1].translation;
+                let h_t  =math.subtract(h,t);
+                let d = math.norm(h_t);
+                let v =  math.multiply(this.ce_D.v,d);
+                let dh = math.add(t,v);
+                this.drawArrow(ctx,t[0], t[2],dh[0], dh[2]);
+
+                //
+                let a = this.pe.a;
+                let b = this.pe.b;
+
+                this.drawArrow(ctx,t[0], t[2],t[0]+a[0]*15, t[2]+a[2]*15);
+                this.drawArrow(ctx,h[0], h[2],h[0]+b[0]*15, h[2]+b[2]*15);
+
+             }
+    }
 
 	createGraph(){
 		for(let pano of this.panorama.panos){

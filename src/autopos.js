@@ -2,10 +2,408 @@ import { create, all,matrix } from 'mathjs'
 import { applyMatrix}  from './math.js'
 import { Panorama } from './panorama.js'
 import { addSignals } from './signals.js'
-
+import {Iqr} from './iqr.js'
 import * as transf from './coordinates_transformation.js';
 
 const math = create(all);
+
+
+class PositionEstimation{
+    constructor(){
+    this.im = [0,0];
+    this.img = [0,0];
+    this.ims =[[],[]];
+    for(var i=0; i < 4;++i){
+            this.ims[0].push(new Image());
+            this.ims[0][i].crossOrigin = 'Anonymous';
+
+            this.ims[1].push(new Image());
+            this.ims[1][i].crossOrigin = 'Anonymous';
+        }
+    this.canvas = [0,0];
+    this.canvas[0] = document.createElement('canvas');
+    this.canvas[1] = document.createElement('canvas');
+    this.canvasbig = document.createElement('canvas');
+    let c = document.getElementById('canvasbig');
+     if(c!=null)
+            c.remove();
+    this.canvasbig.id = "canvasbig";
+
+
+     this.canvasplot =   document.createElement('canvas');
+    c = document.getElementById('canvasplot');
+         if(c!=null)
+                c.remove();
+     this.canvasplot.id = 'canvasplot';
+    }
+
+
+    loadImageFace(i,j,imageUrl){
+
+        // When the image loads, process it
+        return  new Promise((resolve, reject) => {
+            // Create an Image object
+            this.ims[i][j].onload = () => {
+              console.log('Image loaded.');
+              resolve();
+             };
+          this.ims[i][j].src = imageUrl;
+        });
+
+    }
+
+    loadImage(i,imageUrl){
+
+        // When the image loads, process it
+        return  new Promise((resolve, reject) => {
+            // Create an Image object
+            this.img[i] = new Image();
+            this.img[i].crossOrigin = 'Anonymous'; // Enable CORS if the image is hosted on another domain
+
+            this.img[i].onload = () => {
+              // Access pixel data
+              const ctx = this.canvas[i].getContext('2d');
+              ctx.drawImage(this.img[i], 0, 0);
+              this.im[i] =  ctx.getImageData(0, 0, this.canvas[i].width, this.canvas[i].height);
+              resolve();
+             };
+          this.img[i].src = imageUrl;
+        });
+
+    }
+
+  async loadequirectangular(panorama,id,i){
+          this.canvas[i] = document.createElement('canvas');
+          const ctx = this.canvas[i].getContext('2d');
+
+          // Set canvas dimensions to match the image
+          this.canvas[i].width = 6720;
+          this.canvas[i].height = 3360;
+
+
+         let ur = 'https://nb-ganovelli.isti.cnr.it/datasets/miracoli_dawn/panos/'+panorama.panos[id].url;
+         await this.loadImage(i,ur);
+
+         }
+
+  async loadpanostripe(panorama,id,i){
+      let ur = 'https://nb-ganovelli.isti.cnr.it/datasets/miracoli_dawn/panos/'+panorama.panos[id].url.slice(0,-4)+'/fallback/';
+    await this.loadImageFace(i,0, ur+'l.jpg');
+    await this.loadImageFace(i,1, ur+'f.jpg');
+    await this.loadImageFace(i,2, ur+'r.jpg');
+    await this.loadImageFace(i,3, ur+'b.jpg');
+
+    this.canvas[i] = document.createElement('canvas');
+    const ctx = this.canvas[i].getContext('2d');
+
+    // Set canvas dimensions to match the image
+    this.canvas[i].width = 4096;
+    this.canvas[i].height = 1024;
+
+    // Draw the image on the canvas
+    ctx.drawImage(this.ims[i][0], 0, 0);
+    ctx.drawImage(this.ims[i][1], 1024, 0);
+    ctx.drawImage(this.ims[i][2], 2048, 0);
+    ctx.drawImage(this.ims[i][3], 3072, 0);
+
+    //document.body.appendChild(this.canvas[id]);
+
+    // Access pixel data
+    this.im[i] =  ctx.getImageData(0, 0, this.canvas[i].width, this.canvas[i].height);
+  }
+    async findCorrespondencesEqui(panorama,id0,id1){
+           await this.loadequirectangular(panorama,id0,0);
+           await this.loadequirectangular(panorama,id1,1);
+           let matches = this.computeMatches();
+
+           this.canvasbig.height = 6720;
+           this.canvasbig.width =  3360*2;
+           let ctxb = this.canvasbig.getContext('2d');
+           // Draw the image on the canvas
+           ctxb.drawImage(this.img[0],    0, 0);
+           ctxb.drawImage(this.img[1],    0, 3360);
+
+
+           let i =0;
+           for(let m of matches)
+                       {
+               let b = (m.confidence-0.8)/0.2;
+               if(b<0)b=0;
+               b = b*360 ;
+               ctxb.fillStyle = `hsl(${b},100%,50%)`; // Set fill color
+               ctxb.beginPath();
+               ctxb.arc(m.keypoint1[0], m.keypoint1[1], 5, 0, 2*Math.PI, false);
+               ctxb.fill();
+
+
+               ctxb.strokeStyle = `hsl(${b},100%,50%)`; // Set fill color
+               ctxb.fillStyle = `hsl(${b},100%,50%)`;// Set fill color
+
+
+                if(i==0)
+                   ctxb.fillStyle = `yellow`;// Set fill color
+
+               ctxb.beginPath();
+               if(i==0)
+                      ctxb.arc(m.keypoint2[0], m.keypoint2[1]+3360, 10, 0, 2*Math.PI, false);
+   else
+                      ctxb.arc(m.keypoint2[0], m.keypoint2[1]+3360, 5, 0, 2*Math.PI, false);
+               ctxb.fill();
+
+               ctxb.beginPath();
+               ctxb.moveTo(m.keypoint1[0], m.keypoint1[1]);  // Move the drawing cursor to the starting point
+               ctxb.lineTo(m.keypoint2[0], m.keypoint2[1]+3360);
+               ctxb.stroke();
+
+               i=i+1;
+            }
+
+           document.body.appendChild(this.canvasbig);
+            return matches;
+         }
+    computeMatches(){
+               let width = this.im[0].width;
+               let height = this.im[0].height;
+               let blurRadius = 3;
+
+                 var gray1 = tracking.Image.grayscale(tracking.Image.blur(this.im[0].data, width, height, blurRadius), width, height);
+                 var gray2 = tracking.Image.grayscale(tracking.Image.blur(this.im[1].data, width, height, blurRadius), width, height);
+
+                 var corners1 = tracking.Fast.findCorners(gray1, width, height);
+                 var corners2 = tracking.Fast.findCorners(gray2, width, height);
+
+                 var descriptors1 = tracking.Brief.getDescriptors(gray1, width, corners1);
+                 var descriptors2 = tracking.Brief.getDescriptors(gray2, width, corners2);
+
+                 var matches = tracking.Brief.reciprocalMatch(corners1, descriptors1, corners2, descriptors2);
+
+                 matches.sort(function(a, b) {
+                   return b.confidence - a.confidence;
+                 });
+
+               matches = matches.filter( v => {
+                       return v.confidence > 0.85;
+                   });
+                return matches;
+            }
+
+    async findCorrespondences(panorama,id0,id1){
+
+        await this.loadpanostripe(panorama,id0,0);
+        await this.loadpanostripe(panorama,id1,1);
+
+        let matches = this.computeMatches();
+
+
+        this.canvasbig.height = 2048;
+        this.canvasbig.width =  4096;
+        let ctxb = this.canvasbig.getContext('2d');
+        // Draw the image on the canvas
+        ctxb.drawImage(this.ims[0][0],    0, 0);
+        ctxb.drawImage(this.ims[0][1], 1024, 0);
+        ctxb.drawImage(this.ims[0][2], 2048, 0);
+        ctxb.drawImage(this.ims[0][3], 3072, 0);
+        ctxb.drawImage(this.ims[1][0],    0, 1024);
+        ctxb.drawImage(this.ims[1][1], 1024, 1024);
+        ctxb.drawImage(this.ims[1][2], 2048, 1024);
+        ctxb.drawImage(this.ims[1][3], 3072, 1024);
+
+
+
+        let i =0;
+        for(let m of matches)
+                    {
+            let b = (m.confidence-0.8)/0.2;
+            if(b<0)b=0;
+            b = b*360 ;
+            ctxb.fillStyle = `hsl(${b},100%,50%)`; // Set fill color
+            ctxb.beginPath();
+            ctxb.arc(m.keypoint1[0], m.keypoint1[1], 5, 0, 2*Math.PI, false);
+            ctxb.fill();
+
+
+            ctxb.strokeStyle = `hsl(${b},100%,50%)`; // Set fill color
+            ctxb.fillStyle = `hsl(${b},100%,50%)`;// Set fill color
+
+
+             if(i==0)
+                ctxb.fillStyle = `yellow`;// Set fill color
+
+            ctxb.beginPath();
+            if(i==0)
+                   ctxb.arc(m.keypoint2[0], m.keypoint2[1]+1024, 10, 0, 2*Math.PI, false);
+else
+                   ctxb.arc(m.keypoint2[0], m.keypoint2[1]+1024, 5, 0, 2*Math.PI, false);
+            ctxb.fill();
+
+            ctxb.beginPath();
+            ctxb.moveTo(m.keypoint1[0], m.keypoint1[1]);  // Move the drawing cursor to the starting point
+            ctxb.lineTo(m.keypoint2[0], m.keypoint2[1]+1024);
+            ctxb.stroke();
+
+            i=i+1;
+         }
+
+        document.body.appendChild(this.canvasbig);
+
+        // DEGBUG: place an hotspot on the matching points
+        let config = panorama.viewer.getConfig();
+
+        //let [yaw0,pitch0] = transf.pixelToYawPitchPnlm(down_matches[10].keypoint1[0],down_matches[10].keypoint1[1],6720,3360);
+        let [yaw0,pitch0] = transf.pixelCubeToYawPitchPnlm( matches[1].keypoint1[0], matches[1].keypoint1[1],4096,1024);
+
+        let curhs = config.scenes[0].hotSpots[0];
+        curhs.yaw = yaw0;
+        curhs.pitch = pitch0;
+        Object.assign(config.scenes[0].hotSpots[0], curhs);
+
+        // let [yaw1,pitch1] = transf.pixelToYawPitchPnlm(down_matches[10].keypoint2[0],down_matches[10].keypoint2[1],6720,3360);
+        let [yaw1,pitch1] = transf.pixelCubeToYawPitchPnlm( matches[1].keypoint2[0], matches[1].keypoint2[1],4096,1024);
+
+        curhs = config.scenes[1].hotSpots[0];
+        curhs.yaw = yaw1;
+        curhs.pitch = pitch1;
+        Object.assign(config.scenes[1].hotSpots[0], curhs);
+
+        return matches;
+    }
+
+    pixelCubeToTranslationDirection(pano0,p1x,p1y,pano1,p2x,p2y,width,height){
+
+            let [yaw0,pitch0] = transf.pixelCubeToYawPitchPnlm(p1x,p1y,4096,1024);
+
+            let [yaw1,pitch1] = transf.pixelCubeToYawPitchPnlm(p2x,p2y,4096,1024);
+
+            let a = transf.yawPitchToDir(pano0,yaw0,pitch0);
+            let b = transf.yawPitchToDir(pano1,yaw1,pitch1);
+
+            let n = math.cross(a,b);
+            let nm =math.norm(n);
+            n = math.multiply(n,1.0/nm);
+
+            let v = [-n[2],0,n[0]];
+            v = math.multiply(v,1.0/math.norm(v));
+
+            // set the verse of v
+            if(n[1]>0 && math.dot(a,v)<0 ||
+               n[1]<0 && math.dot(a,v)>0)
+                v = math.multiply(v,-1);
+this.a = a;
+this.b = b;
+            return [v,n];
+        }
+
+            pixelEquiToTranslationDirection(pano0,p1x,p1y,pano1,p2x,p2y,width,height){
+
+                    let [yaw0,pitch0] = transf.pixelToYawPitchPnlm(p1x,p1y,width,height);
+
+                    let [yaw1,pitch1] = transf.pixelToYawPitchPnlm(p2x,p2y,width,height);
+
+                    let a = transf.yawPitchToDir(pano0,yaw0,pitch0);
+                    let b = transf.yawPitchToDir(pano1,yaw1,pitch1);
+
+                    let n = math.cross(a,b);
+                    let nm =math.norm(n);
+                    n = math.multiply(n,1.0/nm);
+
+                    let v = [-n[2],0,n[0]];
+                    v = math.multiply(v,1.0/math.norm(v));
+
+                    // set the verse of v
+                    if(n[1]>0 && math.dot(a,v)<0 ||
+                       n[1]<0 && math.dot(a,v)>0)
+                        v = math.multiply(v,-1);
+        this.a = a;
+        this.b = b;
+                    return [v,n];
+                }
+
+      plotDirections(dirs,more){
+
+        this.canvasplot.height = 512;
+        this.canvasplot.width =  512;
+        let ctxb = this.canvasplot.getContext('2d');
+
+        ctxb.strokeStyle = `blues`; // Set fill color
+        ctxb.fillStyle = `hsl(100,10%,10%)`;// Set fill color
+
+        for(let  d of dirs){
+            ctxb.beginPath();
+            ctxb.arc(256+d[0]*254,256+d[2]*254, 1, 0, 2*Math.PI, false);
+            ctxb.fill();
+        }
+        for(let  d of more){
+            ctxb.beginPath();
+            ctxb.arc(256+d[0]*254,256+d[2]*254, 5, 0, 2*Math.PI, false);
+            ctxb.fill();
+        }
+
+        document.body.appendChild(this.canvasplot);
+    }
+
+    estimateCameraPositionFromCorrespondences(pano0,pano1,matches,cube_equi){
+
+ //           let alphas = [];
+            let all= [];
+            let avg = [0,0,0];
+
+
+           let n  = matches.length;
+           for(let  i=0; i < n;++i){
+
+            let v1 =0;
+
+              if(cube_equi) v1 = this.pixelCubeToTranslationDirection(pano0, matches[i].keypoint1[0],matches[i].keypoint1[1],
+                                                          pano1, matches[i].keypoint2[0],matches[i].keypoint2[1],
+                                                          4096,1024)[0];
+                    else
+                            v1 = this.pixelEquiToTranslationDirection(pano0, matches[i].keypoint1[0],matches[i].keypoint1[1],
+                                                                              pano1, matches[i].keypoint2[0],matches[i].keypoint2[1],
+                                                                              6720,3360)[0];
+              all.push(v1);
+              if(v1[0]<0){
+                  v1[0]=-v1[0];
+                  v1[1]=-v1[1];
+               }
+               avg[0]+=v1[0];
+               avg[2]+=v1[2];
+ //           alphas.push(math.atan2(v1[0],v1[2]));
+            }
+              avg[0]/=all.length;
+              avg[2]/=all.length;
+
+              let nm =math.norm(avg);
+              avg = math.multiply(avg,1.0/nm);
+              all.push(avg);
+
+            this.plotDirections(all,[avg]);
+
+            all  = all.filter( v => {
+                    // Euclidean distance in the unit circle
+                    const distance = math.sqrt((v[0] - avg[0]) ** 2 + (v[2] - avg[2]) ** 2);
+                    return distance <= 0.2; // Keep values within the threshold
+                });
+            // take the median of the filtered data
+            n = all.length;
+            avg = [0,0,0];
+            for(let  i=0; i < n;++i){
+                avg[0]+=all[i][0];
+                avg[2]+=all[i][2];
+            }
+            avg[0]/=n;
+            avg[2]/=n;
+
+            //normalize it to have it in the unit circle
+              nm =math.norm(avg);
+            let res = math.multiply(avg,1.0/nm);
+
+//            let iqr = new Iqr();
+//            let res = iqr.estimate(alphas);
+//            let d = [-v[2],0,v[0]];
+//            d = math.multiply(d,1.0/math.norm(d));
+            return res;
+    }
+}
 
 class Autopos {
 
@@ -30,9 +428,9 @@ class Autopos {
 		// Get the current node's outgoing links
 		const currentNodeLinks = panorama.panos[nodeIndex].links;
 
-		// Explore the 'manual' links
+        // Explore the 'manual' links
 		for (let link of currentNodeLinks) {
-		    let [index, yaw, pitch, how] = link; // Destructure the array, where 'how' is the last element
+            let [index, yaw, pitch, how] = link; // Destructure the array, where 'how' is the last element
             if (how === 'manual' && index != rootIndex) {
 		       // console.log(`Following link from node ${nodeIndex} to node ${index}, yaw: ${yaw}, pitch: ${pitch}`);
 		        
@@ -49,16 +447,15 @@ class Autopos {
 		        });
 
 		        // Recursively visit the connected node
-		        dfs(index,d+1);
-
-		  	// look for link to nodeIndex from index (this assumes that edges are bidirectional)
- 		  	for(let lnk of panorama.panos[index].links){
-			  	 let [idx, yaw, pitch, how] = lnk; // Destructure the array, where 'how' is the last element
-			  	   if (idx === nodeIndex && how === 'manual') {
-					dfs(index,d+1);
-				   }
+                dfs(index,d+1);
             }
-           }
+                // look for link to nodeIndex from index (this assumes that edges are bidirectional)
+                for(let lnk of panorama.panos[index].links){
+                     let [idx, yaw, pitch, how] = lnk; // Destructure the array, where 'how' is the last element
+                       if (idx === nodeIndex && nodeIndex != rootIndex && how === 'manual') {
+                        dfs(index,d+1);
+                       }
+            }
           }
 	   	 }
 
@@ -208,6 +605,9 @@ class Autopos {
 			out_delta_pitch = e.target_pitch-e.computed_pitch;
 		}
 
+        let dense_W = W.toArray();
+        //console.log('denseW',dense_W);
+
         let wA = math.sparse(math.zeros([M, N], 'sparse'));
         let A_T = math.transpose(A);
         let M0 = math.multiply(A_T,W);
@@ -217,14 +617,16 @@ class Autopos {
         wA = math.multiply(M3,W);
 
         let dense_wA = wA.toArray();
-        console.log('wA det',math.det(wA));
-
 
         wA = math.pinv(wA);
         dense_wA = wA.toArray();
         let dense_A =  A.toArray();
 
-        return [wA,b,out_d_yaw,out_d_pitch,out_delta_yaw,out_delta_pitch,tails];
+        let  wA_A  = math.subtract(wA,A);
+        let dense_wA_A = wA_A.toArray();
+        console.log('wa_A',dense_wA_A);
+
+        return [A,b,out_d_yaw,out_d_pitch,out_delta_yaw,out_delta_pitch,tails];
 	}
 	
 	// a problem is created with a set of constrained edges
@@ -306,7 +708,7 @@ class Autopos {
 			
 		for(let i of panosToUpdate){
 			let targetId = panos[i].id;
-			console.log('pano to update',targetId);
+    //		console.log('pano to update',targetId);
 			for(let [il,ng] of panos[targetId].links.entries())// for all links of the target (bidirectional edges assumed)
 				{
 				 let yp = transf.posToYawPitch(panos[targetId].translation, panos[ng[0]]);
@@ -318,7 +720,7 @@ class Autopos {
 				 panos[ng[0]].links[index_tp][1] = yp[0];
 				 panos[ng[0]].links[index_tp][2] = yp[1];
 				 
-				 console.log('pano ',targetId, ' to ', ng[0],':', yp[0],yp[1]);
+            //	 console.log('pano ',targetId, ' to ', ng[0],':', yp[0],yp[1]);
 				 
 				 let index = config.scenes[ng[0]].hotSpots.findIndex(e => e.sceneId == targetId);
 				 config.scenes[ng[0]].hotSpots[index].yaw  = yp[0];
@@ -346,4 +748,5 @@ addSignals(Autopos,
 
 export { Panorama }
 export {Autopos}
-
+export {PositionEstimation}
+export {math}
