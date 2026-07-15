@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--input_images_file", "C:/Users/fabio/Documents/devel/guido/colmap_experiments/cavalieri_m_output/sparse/0/images.txt",
+                "--rotation_folder", "C:/Users/fabio/Documents/devel/guido/colmap_experiments/cavalieri_m_output/images",
+"--input_points_file", "C:/Users/fabio/Documents/devel/guido/colmap_experiments/cavalieri_m_output/sparse/0/Points3D.txt"
+            ]
+        }
+    ]
+}

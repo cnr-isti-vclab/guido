@@ -23,11 +23,14 @@ module.exports = {
   devServer: {
     static: './dist',
     port:9000,
-    https: {
-      key: fs.readFileSync("server/private.key"),
-      cert: fs.readFileSync("server/private.pem"),
-      ca: fs.readFileSync("server/private.pem")
-    }
+  devMiddleware: {
+    writeToDisk: true
+  }
+//    https: {
+//      key: fs.readFileSync("server/private.key"),
+//      cert: fs.readFileSync("server/private.pem"),
+//      ca: fs.readFileSync("server/private.pem")
+//    }
   },
 
   optimization: {
