@@ -30,9 +30,9 @@ from __future__ import print_function
 
 import argparse
 from PIL import Image
-from pkg_resources import parse_version
-if parse_version(Image.__version__)>=parse_version('10.0.0'):
-    Image.ANTIALIAS=Image.LANCZOS
+#from pkg_resources import parse_version
+#if parse_version(Image.__version__)>=parse_version('10.0.0'):
+Image.ANTIALIAS=Image.LANCZOS
 import os
 import sys
 import math
