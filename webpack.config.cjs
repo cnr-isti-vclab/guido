@@ -14,14 +14,15 @@ module.exports = {
   },
     cache:false,
   output: {
-    path: path.resolve(__dirname + '/dist/js'),
+    path: path.resolve(__dirname + '/public/js'),
     filename: 'main.js',
+    clean: false
   },
 
   mode: 'development',
   
   devServer: {
-    static: './dist',
+    static: './public',
     port:9000,
   devMiddleware: {
     writeToDisk: true
@@ -40,7 +41,7 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(), 
     new HtmlWebpackPlugin({
       title: 'guide2pi',
-      template: __dirname + '/dist/index.html',
+      template: __dirname + '/src/index.html',
       inject: false
     }),
   ],
