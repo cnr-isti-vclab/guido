@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg952"
+   version="1.1"
+   viewBox="0 0 24 24"
+   height="24"
+   width="24">
+  <defs
+     id="defs946" />
+  <metadata
+     id="metadata949">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:2.28268766;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path2-5"
+     d="M 3.6826136,12 C 3.6826136,12 6.707118,5.9509913 12,5.9509913 17.292882,5.9509913 20.317386,12 20.317386,12 20.317386,12 17.292882,18.049009 12,18.049009 6.707118,18.049009 3.6826136,12 3.6826136,12 Z" />
+  <circle
+     style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:2.28268766;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="circle4"
+     r="2.2683783"
+     cy="12"
+     cx="12" />
+  <path
+     style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:2.28268766;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path2-41"
+     d="m 16.424581,16.424332 a 7.5004924,7.5004924 0 0 1 -4.42432,1.534361 c -5.2138477,0 -8.193191,-5.958684 -8.193191,-5.958684 A 13.742213,13.742213 0 0 1 7.5759379,7.5756856 m 2.8601681,-1.355598 a 6.7928991,6.7928991 0 0 1 1.564155,-0.1787614 c 5.213848,0 8.193188,5.9586838 8.193188,5.9586838 a 13.779455,13.779455 0 0 1 -1.608842,2.376023 M 13.57931,13.57906 a 2.2345062,2.2345062 0 1 1 -3.1581,-3.158103" />
+  <line
+     style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;stroke:#808080;stroke-width:2.28268766;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="line4"
+     y2="20.19319"
+     x2="20.19319"
+     y1="3.8068109"
+     x1="3.8068109" />
+</svg>

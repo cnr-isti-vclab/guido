@@ -360,10 +360,11 @@ export default class MiniMap {
      * @throws {Error} Errore se il pano con ID specificato non è presente nel dataset
      */
     async init (dataset, panoID = -1) {
+      
         try {
             // get dataset
             this.#dataset = dataset;
-        
+            return;
   //          if(!dataset.tours)
   //              return;
         

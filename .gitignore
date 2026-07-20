@@ -2,7 +2,6 @@ minimap_editor/map_svg/node_modules/
 minimap_editor/map_svg/JSdoc
 minimap_editor/map_svg/package-lock.json
 node_modules/
-dist/
 server/private.csr
 server/private.pem
 server/private.key
