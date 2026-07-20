@@ -14,7 +14,7 @@ module.exports = {
   },
     cache:false,
   output: {
-    path: path.resolve(__dirname + '/public/js'),
+    path: path.resolve(__dirname + '/dist/public/js'),
     filename: 'main.js',
     clean: false
   },
@@ -39,10 +39,10 @@ module.exports = {
   }, 
   plugins: [
     new webpack.HotModuleReplacementPlugin(), 
-    new HtmlWebpackPlugin({
-      title: 'guide2pi',
-      template: __dirname + '/src/index.html',
-      inject: false
-    }),
+   // new HtmlWebpackPlugin({
+  //   title: 'guide2pi',
+   //   template: __dirname + '/src/index.html',
+    //  inject: false
+   // }),
   ],
 }
