@@ -230,9 +230,14 @@ async function sendData (dataset, url, errorShowModal = true) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         } else {
-            const result = await response.json();
-            message += result.message;
-        }
+                const text = await response.text();
+                if (text) {
+                const result = JSON.parse(text);
+                message += result.message || "Success";
+                    } else {
+                message += "Success (no response body)";
+                }
+            }
     } catch (error) {
         if (errorShowModal) {
             const dialog = document.querySelector("dialog");

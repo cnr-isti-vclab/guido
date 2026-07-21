@@ -12,7 +12,7 @@ class Editor {
 		this.container = container;
 	
 		this.panorama = new Panorama(panourl, container);
-		this.panorama.addEvent('loaded',      () => this.createEntries(this.panorama.panos));
+		this.panorama.addEvent('loaded',      () => this.createEntries(this.panorama ));
 		//this.panorama.addEvent('zoomchange',  (e) => this.zoomChange(e));
 		//this.panorama.addEvent('wheelevent',  (e) => this.wheelEvent(e));
 
@@ -40,7 +40,16 @@ class Editor {
 			this.save();
 		});
 		
-		// Define your f
+		document.addEventListener('click', (event) => {
+
+			// Calculate the exact pixel coordinates inside the canvas container
+			const x = event.clientX ;
+			const y = event.clientY ;
+
+			console.log(`Clicked canvas local pixels -> X: ${x}, Y: ${y}`);
+			
+			// Put your custom code here (it runs alongside Pannellum's normal behavior)
+		});
 	}
 
 	createGraph(){
@@ -103,13 +112,13 @@ class Editor {
 			entry.classList.add('current');
 	}
 
-	createEntries(panos) {
+	createEntries(panorama) {
 
 		//for(let p of panos)
 		//	p.translation[1] = p.translation[2];
 		this.minimap.init(this.panorama.dataset);
 
-		this.panos = panos;
+		this.panos = panorama.panos;
 		const entries = this.entries = document.querySelector('#tour-entries');
 
 		let set = null;
@@ -127,6 +136,15 @@ class Editor {
 			if('priority' in pano)
 				this.entries.append(this.createEntry(pano));
 		}
+
+		let li = createElement('li', { class: 'tour-set',style: 'margin-top: 20px;' });
+		li.textContent = "IMAGES";
+		this.entries.append(li);
+		for(let photo of panorama.dataset.photos) {
+			this.entries.append(this.createEntryPhoto(photo));
+		}
+
+
 	}
 
 	createEntry(pano) {
@@ -141,6 +159,22 @@ class Editor {
 			this.minimap.changeMap(pano.id);
 			this.panorama.setPano(pano.id, true);
 		});
+		return li;
+	}
+
+	createEntryPhoto(photo) {
+		let li = createElement('li', { 'data-pano': photo.set, 'data-set': photo.tooltip })
+		
+		this.createEntryElementPhoto(photo, li);
+		
+/*		li.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
+			//this.panoClicked(e);
+			this.minimap.changeMap(pano.id);
+			this.panorama.setPano(pano.id, true);
+		});
+*/		
 		return li;
 	}
 
@@ -198,6 +232,58 @@ class Editor {
 			priority.innerHTML = getIcon(priorities[pano.priority]);
 			this.save();
 		});
+	}
+
+	createEntryElementPhoto(photo, li) {
+		let icon = '';
+			
+		let input = createElement('input', { type: 'checkbox' });
+		input.setAttribute('checked', 'checked');
+		li.append(input);
+		let span = createElement('span');
+		span.textContent = ` ${photo.set || photo.name}`;
+		li.append(span);
+
+/*		input.addEventListener('change', (e) => {
+			pano.skip = !input.checked;
+			let spot = document.querySelector(`[data-target="${pano.id}"]`);
+			if(spot)
+				spot.style.display = pano.skip ? 'none' : 'block';
+			e.stopPropagation();
+			e.preventDefault();
+			this.save();
+		});
+		input.addEventListener('click', (e)  => {
+			e.stopPropagation();
+		});
+		span.addEventListener('click', (e) => {
+			if(pano.id == this.panorama.viewer.getScene()) {
+				let input = createElement('input', {type: 'text', value: pano.label});
+				span.innerHTML = '';
+				span.append(input);
+				input.focus();
+				input.addEventListener('blur', () => {
+					pano.label = input.value;
+					span.innerHTML = `${pano.label || pano.id}`;
+				});
+				e.stopPropagation();
+			this.save();
+			}
+		});
+		if(!('priority' in pano))
+			pano.priority = 2;
+		
+		let priorities = ['location', 'waypoint', 'spot'];
+		
+		let priority = createElement('div', { class: 'tour-entrypriority', style: 'float:right'});
+		priority.innerHTML = getIcon(priorities[pano.priority]);
+		li.append(priority);
+		priority.addEventListener('click', (e) => {
+			pano.priority = (pano.priority+2)%3;
+			priority.innerHTML = getIcon(priorities[pano.priority]);
+			this.save();
+		});
+		*/
 	}
 
 	createToolbarElements(toolbar) {
