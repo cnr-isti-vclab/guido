@@ -43,6 +43,10 @@ function getIcon(name) {
 	case 'spot': return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="tour-spot">
 		<circle cx="12" cy="12" r="10"></circle></svg>`;
 
+	case 'photograph':
+    return `<svg xmlns="http://www.w3.org/2000/svg" class="tour-photograph" viewBox="0 0 24 24">
+        <path d="M4 7h4l2-3h4l2 3h4v12H4z"></path>
+        <circle cx="12" cy="13" r="3"></circle></svg>`;
 
 	default: throw "Icon not found.";
 	}
