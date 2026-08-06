@@ -301,9 +301,21 @@ class Editor{
  
 			this.save();
 			if(this.current_placing_id == photo.id && photo.placing)  
+				{ 
 				this.current_placing_id = -1;
+				
+				const uiLayer = this.panorama.viewer.getContainer().querySelector('.pnlm-ui');
+				console.log(uiLayer);
+				uiLayer.classList.remove('placing-mode');
+			}
 			else  
+				{ 
 				this.current_placing_id = photo.id;
+				
+				const uiLayer = this.panorama.viewer.getContainer().querySelector('.pnlm-ui');
+				console.log(uiLayer);
+				uiLayer.classList.add('placing-mode');
+				}
 	 		
 			this.refreshPhotoPlacing();
 		});

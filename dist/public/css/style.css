@@ -243,6 +243,18 @@ svg.tour-drawing {
 }
 
 
+.pnlm-ui.placing-mode.pnlm-grabbing {
+    cursor: grabbing !important;
+}
 
+.pnlm-ui.placing-mode,
+.pnlm-ui.placing-mode.pnlm-grab,
+.placing-mode {
+    cursor: url("data:image/svg+xml;utf8,\
+        <svg xmlns='http://www.w3.org/2000/svg' class='tour-photograph' viewBox='0 0 24 24'>\
+        <path d='M4 7h4l2-3h4l2 3h4v12H4z' fill='none' stroke = 'white' stroke-width='2'></path>\
+        <circle cx='12' cy='13' r='3' fill='none' stroke = 'white' stroke-width='2'></circle></svg>"
+    ) 12 12, pointer !important;
+}
 
-
+		
