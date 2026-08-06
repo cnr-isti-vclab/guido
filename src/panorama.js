@@ -153,7 +153,8 @@ class Panorama {
 				},
 			};
 
-			let infospots = [];
+			// let infospots = [];
+			let hotSpots = [];
 			if( this.photos)
 			for(let target of this.photos) {
  				 if(target.set != pano.set )
@@ -161,13 +162,31 @@ class Panorama {
 				
 				if(!target.visiblefrom)
 					continue;
-				let my_id = target.visiblefrom.find(item=> item===pano.id);
-				if(my_id === pano.id)
-					infospots.push(target);
+				let my_id = target.visiblefrom.find(item=> item [0] === pano.id) || null;
+				if(my_id && my_id[0]  === pano.id){ 
+					//infospots.push(target);
+					hotSpots.push({
+						pitch: my_id[1],
+						//yaw: -yaw - (pano.initialYaw -90),
+						yaw: my_id[2],
+						type: "info",
+						sceneId: pano.id, // maybe
+						clickHandlerArgs : target.url,
+						text:target.tooltip,
+						createTooltipFunc: null,
+						clickHandlerFunc: (e,imgurl) => { 
+							// Display overlay image
+							this.imgurl = this.baseurl+imgurl;
+							this.showOverlayImage(this.imgurl);
+							this.emit('infoshown');
+							e.preventDefault(); 
+							e.stopPropagation(); 
+						},
+					})}
 				
 			}
 			
-			let hotSpots = [];
+			
 
 			if(pano.links)
 			for(let ti of pano.links) {
@@ -211,7 +230,7 @@ class Panorama {
 					
 					if(!photo.visiblefrom)
 						continue;
-					let  id = photo.visiblefrom.find(item=> item===target.id);
+					let  id = photo.visiblefrom.find(item=> item[0] ===target.id);
 					if(id === target.id)
 						target.photos = true;
 					
@@ -239,7 +258,7 @@ class Panorama {
 					},
 				})
 			}
-	
+	/*
 			 if(infospots) 		
 			 for(let target of infospots) {
 
@@ -259,9 +278,7 @@ class Panorama {
 						dir = applyMatrix(pano.rotation, dir);
 					}
 				} 
-				/* working with positions from gps 
-				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
-				*/
+
 				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
 				let yaw = 90 + angle;
 				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
@@ -291,7 +308,7 @@ class Panorama {
 					},
 				})
 			}
-				
+		*/		
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
 		//	config.basePath = './';

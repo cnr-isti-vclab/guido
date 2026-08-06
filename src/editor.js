@@ -60,7 +60,6 @@ class Editor{
 
 				photo.visiblefrom[i >= 0 ? i : photo.visiblefrom.length] = entry;
 
-
 				this.save();
 			}
 		 
