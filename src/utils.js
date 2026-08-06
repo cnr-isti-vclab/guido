@@ -48,7 +48,15 @@ function getIcon(name) {
         <path d="M4 7h4l2-3h4l2 3h4v12H4z"></path>
         <circle cx="12" cy="13" r="3"></circle></svg>`;
 
-	default: throw "Icon not found.";
+	case 'photograph_placing':
+    return `<svg xmlns="http://www.w3.org/2000/svg" class="tour-photograph" viewBox="0 0 24 24">
+  <g transform="scale(1.3) translate(-3 -3)">
+    <path d="M4 7h4l2-3h4l2 3h4v12H4z"   stroke-width="3" fill="none"/>
+    <circle cx="12" cy="13" r="3"   stroke-width="3" fill="none"/>
+  </g>
+</svg>`;
+
+    default: throw "Icon not found.";
 	}
 }
 

@@ -1,24 +1,26 @@
 import  { applyMatrix}  from './math.js'
+ 
 import { Panorama } from './panorama.js'
 import { getIcon, getIcons, createElement, createSvgElement } from './utils.js'
 import MiniMap from './minimap.js';
 
-class Editor {
+class Editor{
 
 	constructor(container, panourl) {
-
+	
 		if(typeof(container) == 'string')
 			container = document.querySelector(container);
 		this.container = container;
 	
 		this.panorama = new Panorama(panourl, container);
-		this.panorama.addEvent('loaded',      () => this.createEntries(this.panorama ));
-		//this.panorama.addEvent('zoomchange',  (e) => this.zoomChange(e));
-		//this.panorama.addEvent('wheelevent',  (e) => this.wheelEvent(e));
+		this.panorama.editor = true;
 
-		//this.panorama.addEvent('viewchange',   (e) => this.viewChange(e));
+	 
+		this.current_placing_id = -1;
+
+		
+		this.panorama.addEvent('loaded',      () => this.createEntries(this.panorama ));
 		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
-		//this.panorama.addEvent('panoclicked', (id) => this.panoClicked(id));
 
 		this.panorama.editor = true;
 
@@ -28,28 +30,30 @@ class Editor {
 		this.minimap = new MiniMap();
 
 		document.addEventListener('keydown', (event) => {
-			if (event.keyCode != 32) return;
-
-			let id = this.panorama.viewer.getScene();			
-			let pano = this.panos.find(e => e.id == id);
-			if(!pano) return;
-
-			pano.yaw = this.panorama.viewer.getYaw();
-			pano.pitch = this.panorama.viewer.getPitch();
-			pano.fov = this.panorama.viewer.getHfov();
-			this.save();
+			 console.log('keydown');
+			 
 		});
 		
-		document.addEventListener('click', (event) => {
+
+
+		document.addEventListener('keyup', (event) => {
+			 console.log('keyup');
+		});
+
+/*	 	document.addEventListener('click', (event) => {
 
 			// Calculate the exact pixel coordinates inside the canvas container
 			const x = event.clientX ;
 			const y = event.clientY ;
 
 			console.log(`Clicked canvas local pixels -> X: ${x}, Y: ${y}`);
-			
+			if(this.current_placing_id != -1)   {
+				console.log(`set image position`);
+			}
+		 
 			// Put your custom code here (it runs alongside Pannellum's normal behavior)
 		});
+*/		 
 	}
 
 	createGraph(){
@@ -112,6 +116,7 @@ class Editor {
 			entry.classList.add('current');
 	}
 
+	
 	createEntries(panorama) {
 
 		//for(let p of panos)
@@ -140,13 +145,29 @@ class Editor {
 		let li = createElement('li', { class: 'tour-set',style: 'margin-top: 20px;' });
 		li.textContent = "IMAGES";
 		this.entries.append(li);
+		let i = 0;
 		for(let photo of panorama.dataset.photos) {
+			
+			photo.id = i;
 			this.entries.append(this.createEntryPhoto(photo));
+			++i;
 		}
 
 
 	}
 
+	refreshPhotoPlacing(){
+		let i = 0;
+		for(let li of this.entries.querySelectorAll('[data-photo]')) {
+			const placing_icon = li.querySelector('.tour-entrypriority');
+				if(i == this.current_placing_id) 
+					placing_icon.innerHTML = getIcon('photograph_placing'); 
+				else 
+					placing_icon.innerHTML = getIcon('photograph');
+				++i;
+		}
+	}
+	
 	createEntry(pano) {
 		let li = createElement('li', { 'data-pano': pano.id, 'data-set': pano.set })
 		
@@ -156,6 +177,7 @@ class Editor {
 			e.stopPropagation();
 			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
 			//this.panoClicked(e);
+			console.log('clicked pano');
 			this.minimap.changeMap(pano.id);
 			this.panorama.setPano(pano.id, true);
 		});
@@ -163,7 +185,7 @@ class Editor {
 	}
 
 	createEntryPhoto(photo) {
-		let li = createElement('li', { 'data-pano': photo.set, 'data-set': photo.tooltip })
+		let li = createElement('li', { 'data-photo': photo.set, 'data-set': photo.tooltip })
 		
 		this.createEntryElementPhoto(photo, li);
 		
@@ -179,12 +201,6 @@ class Editor {
 	}
 
 	createEntryElement(pano, li) {
-		let icon = '';
-		if(pano.priority == 0)
-			icon = getIcon('location');
-		else if(pano.priority == 1)
-			icon = getIcon('waypoint');
-			
 		let input = createElement('input', { type: 'checkbox' });
 		if(pano.skip != true)
 			input.setAttribute('checked', 'checked');
@@ -244,19 +260,19 @@ class Editor {
 		span.textContent = ` ${photo.set || photo.name}`;
 		li.append(span);
 
-/*		input.addEventListener('change', (e) => {
-			pano.skip = !input.checked;
-			let spot = document.querySelector(`[data-target="${pano.id}"]`);
-			if(spot)
-				spot.style.display = pano.skip ? 'none' : 'block';
+		input.addEventListener('change', (e) => {
+			// HERE tell if to use this photo or not
+			// ...
+			console.log('changed photo');
 			e.stopPropagation();
 			e.preventDefault();
 			this.save();
 		});
 		input.addEventListener('click', (e)  => {
+			console.log('clicked photo');
 			e.stopPropagation();
 		});
-		span.addEventListener('click', (e) => {
+/*		span.addEventListener('click', (e) => {
 			if(pano.id == this.panorama.viewer.getScene()) {
 				let input = createElement('input', {type: 'text', value: pano.label});
 				span.innerHTML = '';
@@ -274,16 +290,24 @@ class Editor {
 			pano.priority = 2;
 		
 		let priorities = ['location', 'waypoint', 'spot'];
-		
-		let priority = createElement('div', { class: 'tour-entrypriority', style: 'float:right'});
-		priority.innerHTML = getIcon(priorities[pano.priority]);
-		li.append(priority);
-		priority.addEventListener('click', (e) => {
-			pano.priority = (pano.priority+2)%3;
-			priority.innerHTML = getIcon(priorities[pano.priority]);
-			this.save();
-		});
 		*/
+		let photoinput = createElement('div', { class: 'tour-entrypriority', style: 'float:right'});
+		photoinput.innerHTML = getIcon('photograph');
+		li.append(photoinput);
+		photoinput.addEventListener('mouseup', (e) => {
+			console.log('clicked photoinput');
+		 
+			let coords = this.panorama.mousePositionToCoords(this.panorama.mousePosition); 
+ 
+			this.save();
+			if(this.current_placing_id == photo.id && photo.placing)  
+				this.current_placing_id = -1;
+			else  
+				this.current_placing_id = photo.id;
+	 		
+			this.refreshPhotoPlacing();
+		});
+		
 	}
 
 	createToolbarElements(toolbar) {
@@ -298,6 +322,8 @@ class Editor {
 			this.setView();
 		});
 	}
+
+
 }
 
 export { Editor }

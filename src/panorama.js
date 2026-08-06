@@ -476,7 +476,7 @@ class Panorama {
 		let id = 'A' + (1000000*Math.random()).toFixed(0);
 		
 		let {pitch, yaw } = highlight;
-
+		
 		this.highspot = {
 			id,
 			pitch,
@@ -488,7 +488,9 @@ class Panorama {
 				let spot = createSvgElement('svg', { viewport: '0 0 50 50' });
 				spot.classList.add('tour-highlight');
 				
-				let path = createSvgElement('circle', { r: 20, cx: 25, cy: 25, fill:'rgb(255, 0, 0, 0.5)', stroke:'red' })
+				let path
+ 
+				path = createSvgElement('circle', { r: 20, cx: 25, cy: 25, fill:'rgb(255, 0, 0, 0.5)', stroke:'red' });
 				spot.append(path);
 
 				hotSpotDiv.style.backgroundImage = 'none';
