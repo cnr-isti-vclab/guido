@@ -77,7 +77,7 @@ class Panorama {
 
 	async init(json) {
 		this.dataset = json;
-		json.panos = [];
+		let allPanos = [];
 		for(let set of json.sets) {
 			for(let pano of set.panos) {
 				//pano.url = tour.name + "/" + pano.url;
@@ -85,9 +85,10 @@ class Panorama {
 				pano.set = set.set;
 				pano.photos = false;
 			}
-			json.panos = [...json.panos, ...set.panos];
+			// json.panos = [...json.panos, ...set.panos];
+				allPanos = [...allPanos, ...set.panos];
 		}
-		this.panos = json.panos;
+		this.panos = allPanos;
 		this.photos = json.photos;
 		this.accessPoints = json.accessPoints;
 		//just make sure they exists.

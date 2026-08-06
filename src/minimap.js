@@ -1003,11 +1003,8 @@ export default class MiniMap {
             this.changesUnsaved = true;
         } else { */
             console.log("Saving log: avvio salvataggio modifiche");
-            if(this.#dataset.tours) {
-            let dataset = { 'tours': this.dataset.tours, 'accessPoints': this.dataset.accessPoints };
-            utils.sendData(dataset, this.saveURL);
-            } else
-                utils.sendData(this.#dataset, this.saveURL);
+            utils.sendData(JSON.stringify(this.#dataset, null, 2), this.saveURL);
+                //utils.sendData(this.#dataset, this.saveURL);
     
 /*            this.saveTimeoutRunning = true;
     

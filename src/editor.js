@@ -29,31 +29,44 @@ class Editor{
 
 		this.minimap = new MiniMap();
 
-		document.addEventListener('keydown', (event) => {
+	/*	document.addEventListener('keydown', (event) => {
 			 console.log('keydown');
 			 
 		});
-		
+	*/	
 
 
 		document.addEventListener('keyup', (event) => {
 			 console.log('keyup');
 		});
 
-/*	 	document.addEventListener('click', (event) => {
+ 	 	document.addEventListener('click', (event) => {
 
 			// Calculate the exact pixel coordinates inside the canvas container
 			const x = event.clientX ;
 			const y = event.clientY ;
 
 			console.log(`Clicked canvas local pixels -> X: ${x}, Y: ${y}`);
-			if(this.current_placing_id != -1)   {
+			if(this.current_placing_id != -1 && event.ctrlKey)   {
 				console.log(`set image position`);
+				let coords = this.panorama.mousePositionToCoords(this.panorama.mousePosition);
+				let photo = this.panorama.dataset.photos[this.current_placing_id];	
+				let currpano = this.panorama.viewer.getScene()
+				
+				photo.visiblefrom ||= [];
+
+				const i = photo.visiblefrom.findIndex(v => v[0] === currpano);
+				const entry = [currpano, coords.pitch, coords.yaw];
+
+				photo.visiblefrom[i >= 0 ? i : photo.visiblefrom.length] = entry;
+
+
+				this.save();
 			}
 		 
 			// Put your custom code here (it runs alongside Pannellum's normal behavior)
 		});
-*/		 
+ 		 
 	}
 
 	createGraph(){
@@ -300,10 +313,10 @@ class Editor{
 			let coords = this.panorama.mousePositionToCoords(this.panorama.mousePosition); 
  
 			this.save();
-			if(this.current_placing_id == photo.id && photo.placing)  
+			if(this.current_placing_id == photo.id)  
 				{ 
 				this.current_placing_id = -1;
-				
+
 				const uiLayer = this.panorama.viewer.getContainer().querySelector('.pnlm-ui');
 				console.log(uiLayer);
 				uiLayer.classList.remove('placing-mode');
