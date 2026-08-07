@@ -8,11 +8,17 @@ class Editor{
 
 	constructor(container, panourl) {
 	
+		let path = panourl.split('/');
+		path.pop();
+		this.baseurl = path.join('/') + '/';
+
 		if(typeof(container) == 'string')
 			container = document.querySelector(container);
 		this.container = container;
 	
 		this.panorama = new Panorama(panourl, container);
+		
+
 		this.panorama.editor = true;
 
 	 
@@ -22,7 +28,7 @@ class Editor{
 		this.panorama.addEvent('loaded',      () => this.createEntries(this.panorama ));
 		this.panorama.addEvent('scenechange', (id) => this.sceneChange(id));
 
-		this.panorama.editor = true;
+		this.panorama.editor_ref = this;
 
 		document.querySelector('#tour-initial').style.display = 'none';
 		this.initToolbar();
@@ -65,7 +71,7 @@ class Editor{
 
 				// Check if a hotspot with this photoId already exists
 				const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
-				if(!existingHotspot){				
+				if(!existingHotspot){			
 					this.panorama.viewer.addHotSpot({
 							pitch: coords.pitch,
 							//yaw: -yaw - (pano.initialYaw -90),
@@ -77,9 +83,10 @@ class Editor{
 							text:photo.tooltip,
 							clickHandlerFunc: (e,imgurl) => { 
 								// Display overlay image
-								this.imgurl = this.baseurl+imgurl;
-								this.showOverlayImage(this.imgurl);
-								this.emit('infoshown');
+								this.panorama.showOverlayImage(this.panorama.baseurl+imgurl);
+								this.panorama.emit('infoshown');
+								this.current_placing_id = photo.id;
+								this.refreshPhotoPlacing();
 								e.preventDefault(); 
 								e.stopPropagation(); 
 							},
@@ -89,12 +96,20 @@ class Editor{
 							}
 						},currscene);
 					}
+					else{
+						existingHotspot.pitch = coords.pitch;
+						existingHotspot.yaw = coords.yaw;
+					}
 				this.save();
 			}
 		 
 			// Put your custom code here (it runs alongside Pannellum's normal behavior)
 		});
  		 
+	}
+
+	dosomething() {
+		console.log('dosomething');
 	}
 
 	createGraph(){
@@ -196,6 +211,7 @@ class Editor{
 
 
 	}
+
 
 	refreshPhotoPlacing(){
 		let i = 0;

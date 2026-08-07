@@ -9,6 +9,7 @@ class GuideTour extends Tour {
 		this.panorama.addEvent('highlight_on',   (coords) => this.highlightOn(coords));
 		this.panorama.addEvent('highlight_move', (coords) => this.highlightMove(coords));
 		this.panorama.addEvent('highlight_off',  (coords) => this.highlightOff(coords));
+		
 		this.panorama.addEvent('panzooming',  (transform) => {
 				var sBB  = this.panorama.window.pz.getBoundingBox();
 				var sizex = sBB.right-sBB.left; 

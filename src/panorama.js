@@ -59,8 +59,10 @@ class Panorama {
 	 	area.addEventListener('mousemove', ()=>{
 	 		this.emit('panzooming',window.pz.getTransform());
 	 	});
+
 	}
 
+ 
 	load(url) {
 		(async () => { 
 			var response = await fetch(url);
@@ -180,6 +182,8 @@ class Panorama {
 							this.imgurl = this.baseurl+imgurl;
 							this.showOverlayImage(this.imgurl);
 							this.emit('infoshown');
+							this.editor_ref.current_placing_id = target.id;
+							this.editor_ref.refreshPhotoPlacing();
 							e.preventDefault(); 
 							e.stopPropagation(); 
 						},
