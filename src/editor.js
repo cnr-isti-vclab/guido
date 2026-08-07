@@ -51,15 +51,44 @@ class Editor{
 				console.log(`set image position`);
 				let coords = this.panorama.mousePositionToCoords(this.panorama.mousePosition);
 				let photo = this.panorama.dataset.photos[this.current_placing_id];	
-				let currpano = this.panorama.viewer.getScene()
+				let currscene = this.panorama.viewer.getScene()
 				
 				photo.visiblefrom ||= [];
 
-				const i = photo.visiblefrom.findIndex(v => v[0] === currpano);
-				const entry = [currpano, coords.pitch, coords.yaw];
+				const i = photo.visiblefrom.findIndex(v => v[0] === currscene);
+				const entry = [currscene, coords.pitch, coords.yaw];
 
 				photo.visiblefrom[i >= 0 ? i : photo.visiblefrom.length] = entry;
 
+				const cfg = this.panorama.viewer.getConfig();
+				const scene = cfg.scenes[currscene];
+
+				// Check if a hotspot with this photoId already exists
+				const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
+				if(!existingHotspot){				
+					this.panorama.viewer.addHotSpot({
+							pitch: coords.pitch,
+							//yaw: -yaw - (pano.initialYaw -90),
+							yaw: coords.yaw,
+							type: "info",
+							sceneId: currscene,  
+							photoId: photo.id,
+							clickHandlerArgs : photo.url,
+							text:photo.tooltip,
+							clickHandlerFunc: (e,imgurl) => { 
+								// Display overlay image
+								this.imgurl = this.baseurl+imgurl;
+								this.showOverlayImage(this.imgurl);
+								this.emit('infoshown');
+								e.preventDefault(); 
+								e.stopPropagation(); 
+							},
+							createTooltipFunc: (div) => {
+								// opzionale: stile base
+								div.classList.add("my-hotspot");
+							}
+						},currscene);
+					}
 				this.save();
 			}
 		 
@@ -172,12 +201,26 @@ class Editor{
 		let i = 0;
 		for(let li of this.entries.querySelectorAll('[data-photo]')) {
 			const placing_icon = li.querySelector('.tour-entrypriority');
-				if(i == this.current_placing_id) 
+				const photo = this.panorama.photos[i];
+				const sceneId = this.panorama.viewer.getScene();
+				const scene = this.panorama.viewer.getConfig().scenes[sceneId];
+				// is there is a hotspot for this photo in the current scene, highlight it
+				const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
+
+				if(i == this.current_placing_id) { 
 					placing_icon.innerHTML = getIcon('photograph_placing'); 
-				else 
-					placing_icon.innerHTML = getIcon('photograph');
+					if(existingHotspot) 
+						existingHotspot.div.classList.add('selected');
+				}
+				else { 
+						placing_icon.innerHTML = getIcon('photograph');
+						if(existingHotspot) 
+							existingHotspot.div.classList.remove('selected');
+					}
+
 				++i;
 		}
+
 	}
 	
 	createEntry(pano) {
@@ -319,7 +362,8 @@ class Editor{
 				const uiLayer = this.panorama.viewer.getContainer().querySelector('.pnlm-ui');
 				console.log(uiLayer);
 				uiLayer.classList.remove('placing-mode');
-			}
+
+				}	
 			else  
 				{ 
 				this.current_placing_id = photo.id;
@@ -327,8 +371,8 @@ class Editor{
 				const uiLayer = this.panorama.viewer.getContainer().querySelector('.pnlm-ui');
 				console.log(uiLayer);
 				uiLayer.classList.add('placing-mode');
-				}
-	 		
+
+				}	 		
 			this.refreshPhotoPlacing();
 		});
 		

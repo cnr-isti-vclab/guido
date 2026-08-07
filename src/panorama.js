@@ -171,6 +171,7 @@ class Panorama {
 						yaw: my_id[2],
 						type: "info",
 						sceneId: pano.id, // maybe
+						photoId: target.id,
 						clickHandlerArgs : target.url,
 						text:target.tooltip,
 						createTooltipFunc: null,

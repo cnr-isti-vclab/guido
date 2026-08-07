@@ -257,4 +257,9 @@ svg.tour-drawing {
     ) 12 12, pointer !important;
 }
 
+.pnlm-hotspot.selected {
+    outline: 3px solid #00f;
+    border-radius: 6px;
+    box-shadow: 0 0 10px #00f;
+}
 		
