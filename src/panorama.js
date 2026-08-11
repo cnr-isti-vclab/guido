@@ -169,8 +169,8 @@ class Panorama {
 					//infospots.push(target);
 					hotSpots.push({
 						pitch: my_id[1],
-						//yaw: -yaw - (pano.initialYaw -90),
 						yaw: my_id[2],
+						hidden: my_id[3],
 						type: "info",
 						sceneId: pano.id, // maybe
 						photoId: target.id,
@@ -183,7 +183,7 @@ class Panorama {
 							this.showOverlayImage(this.imgurl);
 							this.emit('infoshown');
 							this.editor_ref.current_placing_id = target.id;
-							this.editor_ref.refreshPhotoPlacing();
+							this.editor_ref.refreshPhotos();
 							e.preventDefault(); 
 							e.stopPropagation(); 
 						},

@@ -86,7 +86,7 @@ class Editor{
 								this.panorama.showOverlayImage(this.panorama.baseurl+imgurl);
 								this.panorama.emit('infoshown');
 								this.current_placing_id = photo.id;
-								this.refreshPhotoPlacing();
+								this.refreshPhotos();
 								e.preventDefault(); 
 								e.stopPropagation(); 
 							},
@@ -170,6 +170,9 @@ class Editor{
 		let entry = this.entries.querySelector(`[data-pano="${id}"]`);
 		if(entry)
 			entry.classList.add('current');
+		    requestAnimationFrame(() => {
+    	    this.refreshPhotos();
+	    });
 	}
 
 	
@@ -213,28 +216,36 @@ class Editor{
 	}
 
 
-	refreshPhotoPlacing(){
+	refreshPhotos(){
 		let i = 0;
 		for(let li of this.entries.querySelectorAll('[data-photo]')) {
 			const placing_icon = li.querySelector('.tour-entrypriority');
-				const photo = this.panorama.photos[i];
-				const sceneId = this.panorama.viewer.getScene();
-				const scene = this.panorama.viewer.getConfig().scenes[sceneId];
-				// is there is a hotspot for this photo in the current scene, highlight it
-				const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
+			
+			const photo = this.panorama.photos[i];
+			const sceneId = this.panorama.viewer.getScene();
+			const scene = this.panorama.viewer.getConfig().scenes[sceneId];
+			// is there is a hotspot for this photo in the current scene, highlight it
+			const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
 
-				if(i == this.current_placing_id) { 
-					placing_icon.innerHTML = getIcon('photograph_placing'); 
+			const visibleFromEntry = photo.visiblefrom.find(v => v[0] === sceneId);
+			const input = li.querySelector('input');
+			input.checked  = visibleFromEntry[3];
+			
+			if(existingHotspot)
+				existingHotspot.div.hidden =  !input.checked ;
+
+			if(i == this.current_placing_id) { 
+				placing_icon.innerHTML = getIcon('photograph_placing'); 
+				if(existingHotspot) 
+					existingHotspot.div.classList.add('selected');
+			}
+			else { 
+					placing_icon.innerHTML = getIcon('photograph');
 					if(existingHotspot) 
-						existingHotspot.div.classList.add('selected');
+						existingHotspot.div.classList.remove('selected');
 				}
-				else { 
-						placing_icon.innerHTML = getIcon('photograph');
-						if(existingHotspot) 
-							existingHotspot.div.classList.remove('selected');
-					}
 
-				++i;
+			++i;
 		}
 
 	}
@@ -325,16 +336,25 @@ class Editor{
 		let icon = '';
 			
 		let input = createElement('input', { type: 'checkbox' });
-		input.setAttribute('checked', 'checked');
+		
+		let sceneid = this.panorama.viewer.getScene()
+		let vf =  photo.visiblefrom.find(v => v[0] === sceneid);
+		input.checked = vf[3];
+
 		li.append(input);
 		let span = createElement('span');
 		span.textContent = ` ${photo.set || photo.name}`;
 		li.append(span);
 
 		input.addEventListener('change', (e) => {
-			// HERE tell if to use this photo or not
-			// ...
-			console.log('changed photo');
+			let ignore = !input.checked;
+			const cfg = this.panorama.viewer.getConfig();
+			const scene = cfg.scenes[this.panorama.viewer.getScene()];
+
+			const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
+
+			existingHotspot.div.hidden =  !input.checked ;
+
 			e.stopPropagation();
 			e.preventDefault();
 			this.save();
@@ -389,7 +409,7 @@ class Editor{
 				uiLayer.classList.add('placing-mode');
 
 				}	 		
-			this.refreshPhotoPlacing();
+			this.refreshPhotos();
 		});
 		
 	}
