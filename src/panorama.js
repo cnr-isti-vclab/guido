@@ -159,13 +159,13 @@ class Panorama {
 			let hotSpots = [];
 			if( this.photos)
 			for(let target of this.photos) {
- 				 if(target.set != pano.set )
- 					continue;
+ 			//	 if(target.set != pano.set )
+ 			//		continue;
 				
 				if(!target.visiblefrom)
 					continue;
 				let my_id = target.visiblefrom.find(item=> item [0] === pano.id) || null;
-				if(my_id && my_id[0]  === pano.id){ 
+				if(my_id && my_id[0]  === pano.id && my_id[3] === true){ 
 					//infospots.push(target);
 					hotSpots.push({
 						pitch: my_id[1],
@@ -182,8 +182,10 @@ class Panorama {
 							this.imgurl = this.baseurl+imgurl;
 							this.showOverlayImage(this.imgurl);
 							this.emit('infoshown');
-							this.editor_ref.current_placing_id = target.id;
-							this.editor_ref.refreshPhotos();
+							if(this.editor){ 
+								this.editor_ref.current_placing_id = target.id;
+								this.editor_ref.refreshPhotos();
+							}
 							e.preventDefault(); 
 							e.stopPropagation(); 
 						},
@@ -191,129 +193,82 @@ class Panorama {
 				
 			}
 			
-			
+			if(this.editor) 
+				this.editor_ref.createGraph();
 
 			if(pano.links)
-			for(let ti of pano.links) {
-				//let target = this.panos[ti];
-				let target = this.panos.find(item => item.id === ti);
-				
-				let tx = target.translation[0];
-				let ty = target.translation[1];
-				let tz = target.translation[2];
+				for(let ti of pano.links)
+					if(!pano.skipLinks.includes(ti) || this.editor)
+						{
+						//let target = this.panos[ti];
+						let target = this.panos.find(item => item.id === ti);
+						
+						let tx = target.translation[0];
+						let ty = target.translation[1];
+						let tz = target.translation[2];
+						
+						let dir = [tx - x, ty - y, tz - z, 1];
+						if(pano.rotation.length) {
+							if(correct) { //try to fix also roll and  pitch
+								let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
+								let G = matMul(pano.rotation, T);
+								dir = applyMatrix(G, dir);
+							} else {
+								dir = applyMatrix(pano.rotation, dir);
+							}
+						} 
+						/* working with positions from gps 
+						let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
+						*/
+						let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
+						let yaw = 90 + angle;
+						let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
+						let H = 2.2;
+						let pitch = -180*Math.atan2(H, dist)/3.1415; 
 
-				
-				let dir = [tx - x, ty - y, tz - z, 1];
-				if(pano.rotation.length) {
-					if(correct) { //try to fix also roll and  pitch
-						let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
-						let G = matMul(pano.rotation, T);
-						dir = applyMatrix(G, dir);
-					} else {
-						dir = applyMatrix(pano.rotation, dir);
-					}
-				} 
-				/* working with positions from gps 
-				let yaw = 90 - 180*Math.atan2(dir[2], dir[0])/3.1415;
-				*/
-				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
-				let yaw = 90 + angle;
-				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-				let H = 2.2;
-				let pitch = -180*Math.atan2(H, dist)/3.1415; 
-
-				if(target.priority == 0)
-					pitch = 1;
+						if(target.priority == 0)
+							pitch = 1;
 
 
-				// check if there are visible photos from the target
-				let infospots_T = [];
-				if(this.photos)
-				for(let photo of this.photos) {
-	 				 if(photo.set != pano.set )
-	 					continue;
+						// check if there are visible photos from the target
+						if(this.photos)
+							for(let photo of this.photos) {
+			//	 				 if(photo.set != pano.set )
+			//	 					continue;
+								
+								if(!photo.visiblefrom)
+									continue;
+
+								let  my_id = photo.visiblefrom.find(item=> item[0] ===target.id) || null;
+
+								if(my_id && my_id[0] === target.id && my_id[3] === true)
+									target.photos = true;
+								
+							}
 					
-					if(!photo.visiblefrom)
-						continue;
-					let  id = photo.visiblefrom.find(item=> item[0] ===target.id);
-					if(id === target.id)
-						target.photos = true;
 					
-				}
-			
-			
-				hotSpots.push({
-					pitch: pitch,
-					//yaw: -yaw - (pano.initialYaw -90),
-					yaw: yaw,
-					type: "scene",
-					sceneId: target.id,
-					createTooltipFunc: (div, args) => { this.createHotspot(div, pano, target, dist); },
-					createTooltipArgs: [1, 2],
-					clickHandlerFunc: (e) => { 
-						//TODO clean this mess!
-						if(e.target.closest('.tour-visibility')) return;
-						this.emit('panoclicked');
+						hotSpots.push({
+							pitch: pitch,
+							//yaw: -yaw - (pano.initialYaw -90),
+							yaw: yaw,
+							type: "scene",
+							sceneId: target.id,
+							createTooltipFunc: (div, args) => { this.createHotspot(div, pano, target, dist); },
+							createTooltipArgs: [1, 2],
+							clickHandlerFunc: (e) => { 
+								//TODO clean this mess!
+								if(e.target.closest('.tour-visibility')) return;
+								this.emit('panoclicked');
 
-						this.setPano(target.id); 
+								this.setPano(target.id); 
 
-						e.preventDefault(); 
-						e.stopPropagation(); 
+								e.preventDefault(); 
+								e.stopPropagation(); 
 
-					},
-				})
-			}
-	/*
-			 if(infospots) 		
-			 for(let target of infospots) {
-
-
-				let tx = target.translation[0];
-				let ty = target.translation[1];
-				let tz = target.translation[2];
-
-				
-				let dir = [tx - x, ty - y, tz - z, 1];
-				if(pano.rotation.length) {
-					if(correct) { //try to fix also roll and  pitch
-						let T = eulerToMatrix(0, scene.horizonPitch, scene.horizonRoll);
-						let G = matMul(pano.rotation, T);
-						dir = applyMatrix(G, dir);
-					} else {
-						dir = applyMatrix(pano.rotation, dir);
+							},
+						})
 					}
-				} 
-
-				let angle = 180*Math.atan2(dir[2], dir[0])/3.1415;
-				let yaw = 90 + angle;
-				let dist = Math.sqrt(dir[0]*dir[0] + dir[2]*dir[2]);
-
-				//if(pano.id == 3)
-				//	console.log({yaw, dist, dir});
-				let H = dir[1];
-				let pitch = 180*Math.atan2(H, dist)/3.1415; 
-
-
-				hotSpots.push({
-					pitch: pitch,
-					//yaw: -yaw - (pano.initialYaw -90),
-					yaw: yaw,
-					type: "info",
-					sceneId: pano.id, // maybe
-					clickHandlerArgs : target.url,
-					text:target.tooltip,
-					createTooltipFunc: null,
-					clickHandlerFunc: (e,imgurl) => { 
-						// Display overlay image
-						this.imgurl = this.baseurl+imgurl;
-						this.showOverlayImage(this.imgurl);
-						this.emit('infoshown');
-						e.preventDefault(); 
-						e.stopPropagation(); 
-					},
-				})
-			}
-		*/		
+	
 			scene.hotSpots = hotSpots;
 			config.scenes[pano.id] = scene;
 		//	config.basePath = './';
@@ -347,6 +302,7 @@ class Panorama {
 		//scenechange event not sent on the first load. (WHY?!);
 		setTimeout(() => { this.sceneChange(this.panos[0].id); }, 100);
 		setTimeout(() => { this.sceneChangeFadeDone(this.panos[0].id); }, 100);
+
 		this.emit('loaded');
 	}
 
@@ -583,17 +539,26 @@ class Panorama {
 			circle.setAttribute('cy', `${12/ry}`);
 			//circle.setAttribute('r', 12);
 		}
-		if(pano.skipLinks.includes(target.id))
-			div.classList.add('hidden');
 
 		if(this.editor) {
 			let v = div.querySelector('.tour-visibility'); //tour-visibility');
 			let onclick = (e) => {
-				div.classList.toggle('hidden');
-				pano.skipLinks.push(target.id);
+				let hidden  = div.classList.toggle('hidden');
+
+				if (hidden) { 
+					if (!pano.skipLinks.includes(target.id)) 
+						pano.skipLinks.push(target.id);
+				}
+				 else  
+						pano.skipLinks = pano.skipLinks.filter(id => id !== target.id);
+				
 				e.stopPropagation();
 				e.preventDefault();
+				this.editor_ref.save();
 			}
+
+			if(pano.skipLinks.includes(target.id))
+				div.classList.add('hidden');
 
 			v.addEventListener('click', onclick);
 			//v.addEventListener('pointerup', onclick);

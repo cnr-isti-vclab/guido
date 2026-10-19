@@ -45,7 +45,20 @@ class Editor{
 		document.addEventListener('keyup', (event) => {
 			 console.log('keyup');
 		});
+ 	 	document.addEventListener('mousedown', (event) => {
+			if(this.current_placing_id != -1 && event.ctrlKey) { 
+				event.preventDefault();
+				event.stopPropagation();
+			}
 
+		});
+ 	 	document.addEventListener('mousemove', (event) => {
+			if(this.current_placing_id != -1 && event.ctrlKey) { 
+				event.preventDefault();
+				event.stopPropagation();
+			}
+
+		});
  	 	document.addEventListener('click', (event) => {
 
 			// Calculate the exact pixel coordinates inside the canvas container
@@ -62,9 +75,9 @@ class Editor{
 				photo.visiblefrom ||= [];
 
 				const i = photo.visiblefrom.findIndex(v => v[0] === currscene);
-				const entry = [currscene, coords.pitch, coords.yaw];
+				const entry = [currscene, coords.pitch, coords.yaw,true];
 
-				photo.visiblefrom[i >= 0 ? i : photo.visiblefrom.length] = entry;
+				photo.visiblefrom[i >= 0 ? i : photo.visiblefrom.length] =  entry;
 
 				const cfg = this.panorama.viewer.getConfig();
 				const scene = cfg.scenes[currscene];
@@ -100,6 +113,7 @@ class Editor{
 						existingHotspot.pitch = coords.pitch;
 						existingHotspot.yaw = coords.yaw;
 					}
+				
 				this.save();
 			}
 		 
@@ -120,8 +134,8 @@ class Editor{
 			pano.links = [];
 			
 			for(let target of this.panorama.panos) {
-			if(target == pano || target.skip || target.set != pano.set ||
-				(pano.skipLinks.includes(target.id) && !this.editor))
+
+				if(target == pano || target.skip || target.set != pano.set )
 				continue;
 
 				let tx = target.translation[0];
@@ -146,7 +160,7 @@ class Editor{
 				if(target.priority == 0 && d < long_range ||
 					target.priority == 1 && d < mid_range ||
 					d < short_range) {
-//					links.push(target);
+	//					links.push(target);
 					pano.links.push(target.id);
 				}	
 				
@@ -155,7 +169,7 @@ class Editor{
 	}
 	
 	save() {
-		this.createGraph();
+	//	this.createGraph();
 		this.minimap.saveDataset();
 	}
 
@@ -229,7 +243,7 @@ class Editor{
 
 			const visibleFromEntry = photo.visiblefrom.find(v => v[0] === sceneId);
 			const input = li.querySelector('input');
-			input.checked  = visibleFromEntry[3];
+			input.checked  = visibleFromEntry ? visibleFromEntry[3] : false;
 			
 			if(existingHotspot)
 				existingHotspot.div.hidden =  !input.checked ;
@@ -339,21 +353,34 @@ class Editor{
 		
 		let sceneid = this.panorama.viewer.getScene()
 		let vf =  photo.visiblefrom.find(v => v[0] === sceneid);
-		input.checked = vf[3];
+		if(vf)
+			input.checked = vf[3];
+		else
+			input.checked = false;
 
 		li.append(input);
 		let span = createElement('span');
-		span.textContent = ` ${photo.set || photo.name}`;
+		span.textContent = ` ${photo.tooltip ||photo.set }`;
 		li.append(span);
 
 		input.addEventListener('change', (e) => {
 			let ignore = !input.checked;
 			const cfg = this.panorama.viewer.getConfig();
-			const scene = cfg.scenes[this.panorama.viewer.getScene()];
+			const sceneId = this.panorama.viewer.getScene();
+			const scene = cfg.scenes[sceneId];
+			// check if the current scene is in the photo's visiblefrom array
+			const vfIndex = photo.visiblefrom.findIndex(v => v[0] === sceneId);
+			// if not, add it with the current checkbox state
+			if(vfIndex === -1) 
+				photo.visiblefrom.push([sceneId, -1, -1, input.checked]);
+			else
+				photo.visiblefrom[vfIndex][3] = input.checked;
+				
 
 			const existingHotspot = scene.hotSpots.find(h => h.photoId === photo.id);
 
-			existingHotspot.div.hidden =  !input.checked ;
+			if (existingHotspot) 
+				existingHotspot.div.hidden =  !input.checked ;
 
 			e.stopPropagation();
 			e.preventDefault();
