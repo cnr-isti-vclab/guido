@@ -79,25 +79,32 @@ class Panorama {
 
 	async init(json) {
 		this.dataset = json;
+		this.scale_factors = {};
 		let allPanos = [];
 		for(let set of json.sets) {
 			for(let pano of set.panos) {
 				//pano.url = tour.name + "/" + pano.url;
 				//pano.priority = 2;
+				if ( !set.scale_factor || set.scale_factor == undefined)
+					this.scale_factors[set.set] = 1.0;
+				else
+					this.scale_factors[set.set] = set.scale_factor;
 				pano.set = set.set;
 				pano.photos = false;
 			}
 			// json.panos = [...json.panos, ...set.panos];
 				allPanos = [...allPanos, ...set.panos];
 		}
+		 
 		this.panos = allPanos;
 		this.photos = json.photos;
 		this.accessPoints = json.accessPoints;
 		//just make sure they exists.
+		 
 		for(let p of this.panos) {
 			p.skipLinks = p.skipLinks || [];
 			if(p.translation.length == 2)
-				p.translation = [p.translation[0], 0, p.translation[1]];
+				p.translation = [p.translation[0] , 0, p.translation[1] ];
 		}
 
 		//this.createInterface();
@@ -135,9 +142,9 @@ class Panorama {
 			pano.horizontalPitch = 0;
 
 			//let [z, x, y] = applyMatrix(pano.rotation, pano.translation);
-			let x = pano.translation[0];
-			let y = pano.translation[1];
-			let z = pano.translation[2];
+			let x = pano.translation[0]*this.scale_factors[pano.set];
+			let y = pano.translation[1]*this.scale_factors[pano.set];
+			let z = pano.translation[2]*this.scale_factors[pano.set];
 
 			let scene = {
 				yaw: pano.yaw || 0,
@@ -203,10 +210,10 @@ class Panorama {
 						//let target = this.panos[ti];
 						let target = this.panos.find(item => item.id === ti);
 						
-						let tx = target.translation[0];
-						let ty = target.translation[1];
-						let tz = target.translation[2];
-						
+						let tx = target.translation[0] *this.scale_factors[target.set];
+						let ty = target.translation[1] *this.scale_factors[target.set];
+						let tz = target.translation[2] *this.scale_factors[target.set];
+
 						let dir = [tx - x, ty - y, tz - z, 1];
 						if(pano.rotation.length) {
 							if(correct) { //try to fix also roll and  pitch

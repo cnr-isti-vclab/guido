@@ -128,9 +128,9 @@ class Editor{
 
 	createGraph(){
 		for(let pano of this.panorama.panos){
-			let x = pano.translation[0];
-			let y = pano.translation[1];
-			let z = pano.translation[2];
+			let x = pano.translation[0]*this.panorama.scale_factors[pano.set];
+			let y = pano.translation[1]*this.panorama.scale_factors[pano.set];
+			let z = pano.translation[2]*this.panorama.scale_factors[pano.set];
 			pano.links = [];
 			
 			for(let target of this.panorama.panos) {
@@ -138,9 +138,9 @@ class Editor{
 				if(target == pano || target.skip || target.set != pano.set )
 				continue;
 
-				let tx = target.translation[0];
-				let ty = target.translation[1];
-				let tz = target.translation[2];
+				let tx = target.translation[0]*this.panorama.scale_factors[target.set];
+				let ty = target.translation[1]*this.panorama.scale_factors[target.set];
+				let tz = target.translation[2]*this.panorama.scale_factors[target.set];
 				let dir = [tx - x, ty - y, tz - z, 1];
 				if(pano.rotation.length) {
 					dir = applyMatrix(pano.rotation, dir);
@@ -219,12 +219,13 @@ class Editor{
 		li.textContent = "IMAGES";
 		this.entries.append(li);
 		let i = 0;
-		for(let photo of panorama.dataset.photos) {
-			
-			photo.id = i;
-			this.entries.append(this.createEntryPhoto(photo));
-			++i;
-		}
+		if(panorama.dataset.photos)
+			for(let photo of panorama.dataset.photos) {
+				
+				photo.id = i;
+				this.entries.append(this.createEntryPhoto(photo));
+				++i;
+			}
 
 
 	}

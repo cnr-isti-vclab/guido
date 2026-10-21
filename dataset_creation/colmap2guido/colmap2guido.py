@@ -187,7 +187,8 @@ def export_to_json(images: List[ImageEntry],
 
     for idx, img in enumerate(images):
         # link to all other cameras by index
-        links =   [str(j) for j in range(N) if j != idx]
+        #links =   [str(j) for j in range(N) if j != idx]
+        links = []
 
         rotation = frame_inv[:3, :3] @ img.rotation[:3, :3]
         r4 = np.eye(4)
@@ -197,7 +198,7 @@ def export_to_json(images: List[ImageEntry],
 
         pano = {
             "id": str(idx),
-            "url": "cavalieri/"+img.name,
+            "url": img.name,
             "rotation": r4.reshape(-1).tolist(),       # 4x4
             "translation": translation.tolist(), # 3
             "label": "LABEL"+str(idx),
@@ -217,6 +218,7 @@ def export_to_json(images: List[ImageEntry],
 
     data = {
         "name": dataset_name,
+        "scale_factor": 1.0,
         "sets": [
             {
                 "set": set_name,
