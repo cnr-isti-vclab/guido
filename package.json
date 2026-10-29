@@ -1,7 +1,7 @@
 {
   "name": "guido",
   "version": "1.0.0",
-  "description": "Interactive guided tour using 360 panoramas in Pisa.",
+  "description": "Interactive guided tour using 360 panoramas.",
   "main": "build/guido.js",
   "type": "module",
   "scripts": {

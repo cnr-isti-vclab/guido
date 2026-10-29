@@ -17,8 +17,9 @@ class Home extends BaseController
     	    'key' => $request->getGet('key'),
 	    	'role' => $request->getGet('role'),
 	    	'dataset' => $dataset,
-	    	'saveurl' => '/save'.$dataset
-	    ];;
+	    		'saveurl' => '/save'.$dataset,
+	    		'host' => config('Guido')->host
+	    	];;
 		if($data['role'] == 'guide' && $data['key'] != '128') {
 			$data['role'] = '';
 			return "problem with password";
