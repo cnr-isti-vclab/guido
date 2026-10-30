@@ -1,6 +1,8 @@
 # guido
 Remote guided tour panorama application.
 
+[![Watch the GuidO video](https://img.youtube.com/vi/2sjop204Hkk/0.jpg)](https://www.youtube.com/watch?v=2sjop204Hkk)
+
 ## Installing GuidO on your machine
 
 ## Requirements
