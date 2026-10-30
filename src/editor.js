@@ -2,15 +2,15 @@ import  { applyMatrix}  from './math.js'
  
 import { Panorama } from './panorama.js'
 import { getIcon, getIcons, createElement, createSvgElement } from './utils.js'
-import MiniMap from './minimap.js';
 
 class Editor{
 
-	constructor(container, panourl) {
+	constructor(container, panourl, saveURL) {
 	
 		let path = panourl.split('/');
 		path.pop();
 		this.baseurl = path.join('/') + '/';
+		this.saveURL = saveURL;
 
 		if(typeof(container) == 'string')
 			container = document.querySelector(container);
@@ -33,7 +33,7 @@ class Editor{
 		document.querySelector('#tour-initial').style.display = 'none';
 		this.initToolbar();
 
-		this.minimap = new MiniMap();
+		this.initSaveDialog();
 
 	/*	document.addEventListener('keydown', (event) => {
 			 console.log('keydown');
@@ -170,7 +170,72 @@ class Editor{
 	
 	save() {
 	//	this.createGraph();
-		this.minimap.saveDataset();
+		return this.saveDataset();
+	}
+
+	async saveDataset(showErrorDialog = true) {
+		try {
+			const response = await fetch(this.saveURL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+				},
+				body: JSON.stringify(this.panorama.dataset, null, 2),
+			});
+			const result = await response.json();
+
+			if (!response.ok || !result.done) {
+				throw new Error(result.error || `Save failed with HTTP ${response.status}.`);
+			}
+
+			this.lastSaveError = null;
+			return true;
+		} catch (error) {
+			this.lastSaveError = error;
+			console.error('Could not save dataset:', error);
+			if (showErrorDialog) {
+				const dialog = document.querySelector('#save_dialog');
+				if (dialog) {
+					document.querySelector('#save_error_message').textContent = error.message;
+					if (!dialog.open)
+						dialog.showModal();
+				}
+			}
+			return false;
+		}
+	}
+
+	initSaveDialog() {
+		const dialog = document.querySelector('#save_dialog');
+		if (!dialog)
+			return;
+
+		const landing = dialog.querySelector('.save_dialog_landing');
+		const loading = dialog.querySelector('.save_dialog_loading');
+
+		dialog.querySelector('#save_dialog_retry_btn').addEventListener('click', async () => {
+			landing.classList.add('save_dialog_hidden');
+			loading.classList.remove('save_dialog_hidden');
+
+			let saved = false;
+			for (let attempt = 0; attempt < 5 && !saved; attempt++) {
+				saved = await this.saveDataset(false);
+				if (!saved && attempt < 4)
+					await new Promise(resolve => setTimeout(resolve, 1000));
+			}
+
+			if (saved) {
+				dialog.close();
+			} else {
+				landing.classList.remove('save_dialog_hidden');
+				loading.classList.add('save_dialog_hidden');
+				document.querySelector('#save_error_message').textContent =
+					this.lastSaveError?.message || 'Save failed after 5 attempts. Check your connection and try again.';
+			}
+		});
+
+		dialog.querySelector('#save_dialog_continue_btn').addEventListener('click', () => dialog.close());
 	}
 
 	initToolbar() {
@@ -194,8 +259,6 @@ class Editor{
 
 		//for(let p of panos)
 		//	p.translation[1] = p.translation[2];
-		this.minimap.init(this.panorama.dataset);
-
 		this.panos = panorama.panos;
 		const entries = this.entries = document.querySelector('#tour-entries');
 
@@ -275,7 +338,6 @@ class Editor{
 			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
 			//this.panoClicked(e);
 			console.log('clicked pano');
-			this.minimap.changeMap(pano.id);
 			this.panorama.setPano(pano.id, true);
 		});
 		return li;
@@ -286,14 +348,6 @@ class Editor{
 		
 		this.createEntryElementPhoto(photo, li);
 		
-/*		li.addEventListener('click', (e) => {
-			e.stopPropagation();
-			if(e.target.tagName == 'input' || e.target.tagName == 'svg') return;
-			//this.panoClicked(e);
-			this.minimap.changeMap(pano.id);
-			this.panorama.setPano(pano.id, true);
-		});
-*/		
 		return li;
 	}
 

@@ -12,8 +12,7 @@ let authToken = window.guido_auth_token;
 
 switch(role) {
 	case 'editor': 
-		let editor = new Editor('#panorama', dataset); 
-		editor.minimap.saveURL = saveUrl;
+		let editor = new Editor('#panorama', dataset, saveUrl);
 		break;
 
 	case 'guide': 
