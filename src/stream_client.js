@@ -20,9 +20,10 @@ class StreamClient {
 	static CAMERA = 1;
 	static AUDIO = 2;
 	static SCREEN = 4;
-	constructor(url, path) {
+	constructor(url, path, authToken = null) {
 		this.url = url;
 		this.path = path;
+		this.authToken = authToken;
 		this.init();
 		//setTimeout(()=> { this.shareMedia(StreamClient.CAMERA | StreamClient.AUDIO) }, 2000);
 		//setTimeout(()=> { this.subscribe() }, 3000);
@@ -38,7 +39,11 @@ class StreamClient {
 			console.log("Security problem: getDisplayMedia is undefined");
 		}
 
-		let socket = this.socket = socketClient(this.url, { path: this.path, transports: ['websocket'] });
+		let socket = this.socket = socketClient(this.url, {
+			path: this.path,
+			transports: ['websocket'],
+			auth: this.authToken ? { token: this.authToken } : {},
+		});
 
 		socket.request = function(type, data = {}) {
 			return new Promise((resolve) => {

@@ -1,0 +1,21 @@
+#!/usr/bin/env php
+<?php
+
+define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR);
+chdir(FCPATH);
+
+require FCPATH . 'app/Config/Paths.php';
+$paths = new Config\Paths();
+require rtrim($paths->systemDirectory, '\\/ ') . DIRECTORY_SEPARATOR . 'bootstrap.php';
+
+require_once SYSTEMPATH . 'Config/DotEnv.php';
+(new CodeIgniter\Config\DotEnv(ROOTPATH))->load();
+
+$app = Config\Services::codeigniter();
+$app->initialize();
+$app->setContext('php-cli');
+
+$console = new CodeIgniter\CLI\Console();
+$console->showHeader();
+$exitCode = $console->run();
+exit(is_int($exitCode) ? $exitCode : EXIT_SUCCESS);

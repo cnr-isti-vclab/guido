@@ -1,5 +1,6 @@
 import path from "path"
 import * as fs from 'fs';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 import * as https from 'https';
 import express from 'express';
@@ -125,6 +126,21 @@ async function runSocketServer() {
 		log: true
 	});
 
+	socketServer.use((socket, next) => {
+		const token = socket.handshake.auth?.token;
+		if (!token) {
+			socket.data.roles = [];
+			return next();
+		}
+
+		try {
+			socket.data.roles = verifyAuthToken(token);
+			next();
+		} catch {
+			next(new Error('Authentication failed'));
+		}
+	});
+
 	socketServer.on('connection', (socket) => {	
 
 		console.log('client connect', socket.id);
@@ -171,14 +187,12 @@ async function runSocketServer() {
 			socket.broadcast.emit('users', clients);
 		});
 
-		socket.on('guide', (key) => {
-			if(key == 'keyplaceholder') {
-				//console.log('Start recording guide');
-				guide = clients[socket.id];
-				guide.guide = true;
-				//socketServer.emit('users', clients);
-				socket.emit('hi guide');
-			}
+		socket.on('guide', () => {
+			if (!socket.data.roles.includes('guide'))
+				return;
+			guide = clients[socket.id];
+			guide.guide = true;
+			socket.emit('hi guide');
 		});
 
 		socket.on('mute', (user) => {
@@ -239,13 +253,12 @@ async function runSocketServer() {
 		});
 
 		socket.on('status', (status) => {
-			last_status = status;
 			let client = clients[socket.id];
-
-			if(client.guide) {
-				status.users = socketServer.engine.clientsCount;
-				socket.broadcast.emit('follow', status);
-			}
+			if (!client.guide)
+				return;
+			last_status = status;
+			status.users = socketServer.engine.clientsCount;
+			socket.broadcast.emit('follow', status);
 			saveStatus(client, status);
 		});
 		
@@ -317,6 +330,10 @@ async function runSocketServer() {
 
 		socket.on('produce', async (data, callback) => {
 			let client = clients[socket.id];
+			if (!client.guide && client.locked) {
+				callback({ error: 'Publishing is not allowed for this user.' });
+				return;
+			}
 			if(!client.producerTransport) {
 				console.log("Trying to produce without a transport");
 				return;
@@ -396,9 +413,42 @@ async function runSocketServer() {
 		});
 
 		socket.on('record', async(data, callback) => {
+			if (!clients[socket.id].guide)
+				return;
 			handleStartRecording(guide);
 		});
 	});
+}
+
+function verifyAuthToken(token) {
+	const secret = process.env.GUIDO_AUTH_SECRET;
+	if (!secret || secret.length < 32 || typeof token !== 'string' || token.length > 4096)
+		throw new Error('Invalid authentication configuration or token.');
+
+	const parts = token.split('.');
+	if (parts.length !== 3)
+		throw new Error('Malformed authentication token.');
+
+	const decode = (value) => Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+	const header = JSON.parse(decode(parts[0]).toString('utf8'));
+	if (header.alg !== 'HS256')
+		throw new Error('Unsupported authentication token algorithm.');
+
+	const expected = createHmac('sha256', secret).update(`${parts[0]}.${parts[1]}`).digest();
+	const provided = decode(parts[2]);
+	if (provided.length !== expected.length || !timingSafeEqual(provided, expected))
+		throw new Error('Invalid authentication token signature.');
+
+	const payload = JSON.parse(decode(parts[1]).toString('utf8'));
+	if (typeof payload.sub !== 'string'
+		|| !Number.isInteger(payload.exp)
+		|| payload.exp <= Math.floor(Date.now() / 1000)
+		|| !Array.isArray(payload.roles)
+		|| payload.roles.some((role) => typeof role !== 'string')) {
+		throw new Error('Invalid authentication token claims.');
+	}
+
+	return payload.roles;
 }
 
 async function runMediasoupWorker() {

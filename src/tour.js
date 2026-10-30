@@ -7,7 +7,7 @@ import { StreamClient } from './stream_client.js'
 
 
 class Tour {
-	constructor(container, panourl, serverurl, socketpath) {
+	constructor(container, panourl, serverurl, socketpath, authToken = null) {
 		if(typeof(container) == 'string')
 			container = document.querySelector(container);
 		this.container = container;
@@ -15,6 +15,7 @@ class Tour {
 		this.guide = false;
 		this.serverurl = serverurl;
 		this.socketpath = socketpath;
+		this.authToken = authToken;
 		this.connected = false;
 
 		this.pauseStatus = {}; //pause status by action
@@ -57,7 +58,7 @@ class Tour {
 	}
 
 	initClient() {
-		let client = new StreamClient(this.serverurl, this.socketpath);
+		let client = new StreamClient(this.serverurl, this.socketpath, this.authToken);
 		client.addEvent('connecting', () => { console.log('connecting'); });
 		client.addEvent('connected', (e) => {
 			this.connected = true; 

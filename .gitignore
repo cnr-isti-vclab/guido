@@ -6,3 +6,4 @@ server/private.csr
 server/private.pem
 server/private.key
 /dist/public/datasets
+/dist/writable

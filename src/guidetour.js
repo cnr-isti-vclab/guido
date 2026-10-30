@@ -2,8 +2,8 @@ import { Tour } from './tour.js'
 import { StreamClient } from './stream_client.js'
 
 class GuideTour extends Tour {
-	constructor(container, panourl, serverurl, socketpath) {
-		super(container, panourl, serverurl, socketpath);
+	constructor(container, panourl, serverurl, socketpath, authToken = null) {
+		super(container, panourl, serverurl, socketpath, authToken);
 
 
 		this.panorama.addEvent('highlight_on',   (coords) => this.highlightOn(coords));
@@ -24,7 +24,7 @@ class GuideTour extends Tour {
 		this.streamClient.addEvent('publish error', (e) => { console.log('publish error', e); });
 
 		this.streamClient.addEvent('connected', () => {
-			this.streamClient.sendMsg('guide', 'keyplaceholder');
+			this.streamClient.sendMsg('guide');
 		});
 
 		document.addEventListener('DOMContentLoaded', e => {

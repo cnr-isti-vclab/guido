@@ -31,14 +31,10 @@ $routes->set404Override();
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
 $routes->get('tours/(:any)', 'Home::tours/$1');
-
-/*$routes->get('passwordless',  'user/passwordless');
-$routes->get('logout',        'user/logout');
-
-$routes->get('profile/update', 'profile/updateProfile');
-$routes->get('profile/(:any)', 'profile/index/$1'); */
-
-$routes->post('save/(:any)', 'Home::save');
+$routes->get('login', 'Login::index');
+$routes->post('login', 'Login::authenticate', ['filter' => 'csrf']);
+$routes->post('logout', 'Login::logout', ['filter' => 'csrf']);
+$routes->post('save/datasets/(:segment)/dataset.json', 'Home::save/$1', ['filter' => 'csrf']);
 
 /*
  * --------------------------------------------------------------------
@@ -56,4 +52,3 @@ $routes->post('save/(:any)', 'Home::save');
 if (is_file(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }
-

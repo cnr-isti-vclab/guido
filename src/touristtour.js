@@ -2,8 +2,8 @@ import { Tour } from './tour.js'
 import { StreamClient } from './stream_client.js'
 
 class TouristTour extends Tour {
-	constructor(container, panourl, serverurl, socketpath) {
-		super(container, panourl, serverurl, socketpath);
+	constructor(container, panourl, serverurl, socketpath, authToken = null) {
+		super(container, panourl, serverurl, socketpath, authToken);
 
 		this.guideView = null;  
 		this.following = true;  //only when following
