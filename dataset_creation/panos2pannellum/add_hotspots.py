@@ -11,8 +11,25 @@ def add_photos_to_json(json_path, images_folder, set_name="default"):
     # Supported image extensions
     image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 
-    photos = []
-    photo_id = 0
+    photos = data.get("photos", [])
+    existing_names = set()
+    existing_ids = {
+        photo["id"]
+        for photo in photos
+        if isinstance(photo, dict) and "id" in photo
+    }
+
+    for photo in photos:
+        if not isinstance(photo, dict):
+            continue
+        if photo.get("tooltip"):
+            existing_names.add(str(photo["tooltip"]).casefold())
+        if photo.get("url"):
+            existing_names.add(
+                os.path.splitext(os.path.basename(photo["url"]))[0].casefold()
+            )
+
+    added_count = 0
 
     # Sort files for deterministic IDs
     for filename in sorted(os.listdir(images_folder)):
@@ -26,25 +43,36 @@ def add_photos_to_json(json_path, images_folder, set_name="default"):
             continue
 
         name = os.path.splitext(filename)[0]
+        if name.casefold() in existing_names:
+            continue
+
+        photo_id = len(photos)
+        while photo_id in existing_ids:
+            photo_id += 1
 
         photos.append({
             "tooltip": name,
-            "url": filepath.replace("\\", "/"),
+            "url": os.path.relpath(
+                filepath,
+                start=os.path.dirname(os.path.abspath(json_path))
+            ).replace("\\", "/"),
             "set": set_name,
             "visiblefrom": [],
             "id": photo_id
         })
 
-        photo_id += 1
+        existing_names.add(name.casefold())
+        existing_ids.add(photo_id)
+        added_count += 1
 
-    # Add or replace photos array at root level
+    # Add the new photos while preserving existing entries
     data["photos"] = photos
 
-    # Write back JSON
-    with open("new_dataset.json", "w", encoding="utf-8") as f:
+    # Write the updated data back to the input JSON file
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"Added {len(photos)} photos to '{json_path}'")
+    print(f"Added {added_count} photos to '{json_path}'")
 
 
 if __name__ == "__main__":
@@ -65,3 +93,4 @@ if __name__ == "__main__":
         args.images_folder,
         args.set_name
     )
+    

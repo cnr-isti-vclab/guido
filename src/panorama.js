@@ -49,6 +49,7 @@ class Panorama {
 			this.load(panourl);
 		
 	 	var area = document.getElementById('overlayImage');
+		console.log(area.parentElement);
 	 	window.pz = panzoom(area, {autocenter: true, bounds: true,boundsPadding: 0.1});
 	 	window.pz.setMinZoom(1.0);
 	 	window.pz.setMaxZoom(5.0);
@@ -185,6 +186,7 @@ class Panorama {
 						text:target.tooltip,
 						createTooltipFunc: null,
 						clickHandlerFunc: (e,imgurl) => { 
+							
 							// Display overlay image
 							this.imgurl = this.baseurl+imgurl;
 							this.showOverlayImage(this.imgurl);

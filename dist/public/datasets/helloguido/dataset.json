@@ -4,6 +4,7 @@
     {
       "set": "haring",
       "order": 0,
+      "scale_factor": 1,
       "panos": [
         {
           "id": "0",
@@ -32,19 +33,16 @@
             51.4785549125765
           ],
           "label": "haring 0",
-          "skipLinks": [
-            "1",
-            "1",
-            "1",
-            "1"
-          ],
+          "skipLinks": [],
           "priority": 2,
           "initialYaw": 70.2824884072202,
           "horizontalPitch": 0,
           "horizontalRoll": 0,
-          "links": [],
+          "links": [
+            "1"
+          ],
           "set": "haring",
-          "photos": false,
+          "photos": true,
           "skip": false
         },
         {
@@ -86,7 +84,8 @@
             "0"
           ],
           "set": "haring",
-          "photos": false
+          "photos": true,
+          "skip": false
         }
       ]
     }
@@ -94,7 +93,7 @@
   "photos": [
     {
       "tooltip": "San Ranieri Door",
-      "url": "foto1.jpg",
+      "url": "image 1.jpg",
       "set": "haring",
       "translation": [
         -13.6475680136058,
@@ -104,21 +103,21 @@
       "visiblefrom": [
         [
           "0",
-          35.38089826928805,
-          -2.0555935675175974,
+          21.90964861461688,
+          -26.1850224125644,
           true
         ],
         [
           "1",
           40.90792988879622,
           -10.379489811515771,
-          false
+          true
         ]
       ],
       "id": 0
     },
     {
-      "tooltip": "San Ranieri Door",
+      "tooltip": "Image 2",
       "url": "foto2.jpg",
       "set": "haring",
       "translation": [
@@ -129,14 +128,14 @@
       "visiblefrom": [
         [
           "0",
-          -4.449604044862102,
-          -44.64865165256201,
-          false
+          29.850330268150213,
+          7.3748159228421315,
+          true
         ],
         [
           "1",
-          -6.523848788320181,
-          -34.73455380325031,
+          43.660944841263806,
+          21.521912407614384,
           true
         ]
       ],

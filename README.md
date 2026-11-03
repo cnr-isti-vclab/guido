@@ -105,6 +105,21 @@ directory name. The account must have the corresponding role. Passwords are
 stored as password hashes, and the guide permission is verified by both the
 PHP application and the Node.js server.
 
+## Configure the site URL
+
+The CodeIgniter application uses `app.baseURL` when it builds redirects. The
+default `http://localhost/` is for local development; set the browser-reachable
+URL of the PHP site in `dist/.env` on the server so login redirects return to
+that site:
+
+```text
+app.baseURL = "https://your-domain.example/"
+```
+
+Use the site's HTTPS URL when TLS is enabled, and keep the trailing slash. If
+the site is hosted below a path, include that path in the URL. Do not use
+`localhost` unless the browser and PHP server are the same machine.
+
 ## Starting the mediasoup server
 
 Install the Node.js dependencies from the project root:

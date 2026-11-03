@@ -4,11 +4,12 @@
 	<title>Guido tour</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
 	<link type="text/css"rel="stylesheet" href="/css/pannellum.css"/>
 	<link type="text/css" rel="stylesheet" href="/css/style.css">
-	<link type="text/css" rel="stylesheet" href="/css/minimap.css">
+	<link type="text/css" rel="stylesheet" href="/css/save.css">
 <!--	<link type="text/css" rel="stylesheet" href="/css/navigation.css"> -->
 	<style>
 		.modal-backdrop { display:none; }
@@ -30,25 +31,25 @@
 			cursor:auto !important;
 			opacity:0.2;
 		}
-                #overlayImageContainer {
-                    display: none;
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    z-index: 0;
-                    background-color: rgba(0, 0, 0, 0.8);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-                }
-                #overlayImage {
-                    max-width: 100%;
-                    max-height: 80vh;
-                    display: block;
-                    margin: 0 auto;
-                }
-                #overlayImage {
+		#overlayImageContainer {
+			display: none;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 0;
+			background-color: rgba(0, 0, 0, 0.8);
+			padding: 20px;
+			border-radius: 5px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+		}		
+		#overlayImageWrapper {
+		    max-width: 90%;
+		    max-height: 90%;
+		    overflow: hidden; /* Ensures the image doesn't overflow the container */
+		    position: relative;
+		}
+        #overlayImage {
 		    width: 100%;
 		    height: auto;
 		    cursor: zoom-in; /* Indicate that the image can be zoomed */
@@ -56,12 +57,7 @@
 		    transform-origin: center center; /* Ensure the image stays in the same initial viewport while zooming */
 		}
 
-		#overlayImageWrapper {
-		    max-width: 90%;
-		    max-height: 90%;
-		    overflow: hidden; /* Ensures the image doesn't overflow the container */
-		    position: relative;
-		}
+
 		
 		#overlayImage.zoomed {
 		    cursor: zoom-out; /* Indicate that the image can be zoomed out */
@@ -221,37 +217,26 @@
 		</div>
 	</div>
 
-	<dialog id="minimap_dialog">
-		<div class="minimap_dialog_landing">
-		  <p>Error while saving</p>
-		  <ul>
-			<li><b>Retry</b>: try again</li>
-			<li><b>Continue</b>: continue editing</li>
-		  </ul>
-		  <div>
-			<button id="minimap_dialog_retry_btn" title="Retry">Riprova</button>
-			<button id="minimap_dialog_continue_btn" title="Continue">Prosegui</button>
-		  </div>
-		</div>
-		<div class="minimap_dialog_loading minimap_dialog_hidden">
-		  <p>Attendere prego...</p>
-		  <svg class="minimap_dialog_loader_svg" viewBox="0 -5.5 37 16.5">
-			<circle cx="5.5" cy="5.5" r="5"></circle>
-			<circle cx="18.5" cy="5.5" r="5"></circle>
-			<circle cx="31.5" cy="5.5" r="5"></circle>
-		  </svg>
-		</div>
-	  </dialog>	  
-  
-	  <div id="minimap_container">
-		<div id="map_container" class="simple_container map_container hidden">
-		  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" id="map_svg"></svg>
-		  <div id="map_controls" class="controls"></div>
-		</div>
-		<div id="map_open" class="simple_container">
-<!--	MINIMAP NOT READY YET	  <button id="btn_map_open" class="map_control_btn map_open_btn" title="Open map editor"></button> -->
-		</div>
-	  </div>
+	<?php if ($role === 'editor'): ?>
+		<dialog id="save_dialog">
+			<div class="save_dialog_landing">
+				<p>Could not save the dataset.</p>
+				<p id="save_error_message">Check your connection or server and try again.</p>
+				<div>
+					<button id="save_dialog_retry_btn" type="button">Retry</button>
+					<button id="save_dialog_continue_btn" type="button">Continue editing</button>
+				</div>
+			</div>
+			<div class="save_dialog_loading save_dialog_hidden">
+				<p>Retrying save...</p>
+				<svg class="save_dialog_loader_svg" viewBox="0 -5.5 37 16.5">
+					<circle cx="5.5" cy="5.5" r="5"></circle>
+					<circle cx="18.5" cy="5.5" r="5"></circle>
+					<circle cx="31.5" cy="5.5" r="5"></circle>
+				</svg>
+			</div>
+		</dialog>
+	<?php endif ?>
 
           <div id="overlayImageContainer">
           <div id="overlayImageWrapper">
@@ -273,11 +258,11 @@
 	<script type="text/javascript" src="/js/pannellum.js"></script>
 	<script type="text/javascript">
 
-window.guido_host = 'https://146.48.84.175:8080';
-window.guido_role = '<?=$role?>';
-window.guido_key = '<?=$key?>';
-window.guido_dataset = '<?=$dataset?>';
-window.guido_saveUrl = '<?=$saveurl?>';
+window.guido_host = <?= json_encode($host, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+window.guido_role = <?= json_encode($role) ?>;
+window.guido_auth_token = <?= json_encode($authToken, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+window.guido_dataset = <?= json_encode($dataset, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+window.guido_saveUrl = <?= json_encode($saveurl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 	</script>
 	
 	<script type="module" src="/js/main.js"></script> 
@@ -287,4 +272,3 @@ window.guido_saveUrl = '<?=$saveurl?>';
 
 </body>
 </html>
-

@@ -7,3 +7,4 @@ server/private.pem
 server/private.key
 /dist/public/datasets
 /dist/writable
+dist/app/Views/tour_aug_2.php
