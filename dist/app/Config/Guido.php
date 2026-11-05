@@ -6,7 +6,7 @@ use CodeIgniter\Config\BaseConfig;
 
 class Guido extends BaseConfig
 {
-    public string $host = 'https://146.48.84.175:8080';
+    public string $host = 'https://nb-ganovelli.isti.cnr.it:8080';
     public string $authSecret = '';
 
     public function __construct()
